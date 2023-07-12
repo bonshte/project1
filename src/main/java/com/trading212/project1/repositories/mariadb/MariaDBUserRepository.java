@@ -3,7 +3,7 @@ package com.trading212.project1.repositories.mariadb;
 import com.trading212.project1.core.models.Role;
 import com.trading212.project1.repositories.entities.UserEntity;
 import com.trading212.project1.repositories.UserRepository;
-import com.trading212.project1.repositories.entities.mappers.ClientEntityRowMapper;
+import com.trading212.project1.repositories.entities.mappers.UserEntityRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -30,14 +30,14 @@ public class MariaDBUserRepository implements UserRepository {
 
     @Override
     public Optional<UserEntity> getClientByUsername(String username) {
-        return jdbcTemplate.query(Queries.SELECT_BY_USERNAME, new ClientEntityRowMapper(), username)
+        return jdbcTemplate.query(Queries.SELECT_BY_USERNAME, new UserEntityRowMapper(), username)
                 .stream()
                 .findFirst();
     }
 
     @Override
     public List<UserEntity> getClients() {
-        return jdbcTemplate.query(Queries.SELECT_ALL_CLIENTS, new ClientEntityRowMapper());
+        return jdbcTemplate.query(Queries.SELECT_ALL_CLIENTS, new UserEntityRowMapper());
     }
 
     @Override
@@ -53,18 +53,18 @@ public class MariaDBUserRepository implements UserRepository {
                 ps.setString(4, password);
                 ps.setString(5, role.roleName);
                 ps.setDate(6, Date.valueOf(dateCreated));
-                ps.setFloat(7,rating);
+                ps.setFloat(7, rating);
                 return ps;
             }, keyHolder);
             Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
 
-            return new UserEntity(id,username,email,phoneNumber,password, dateCreated, rating, role);
+            return new UserEntity(id, username, email, phoneNumber, password, dateCreated, rating, role);
         });
     }
 
     @Override
     public int deleteClientByUsername(String username) {
-            return jdbcTemplate.update(Queries.DELETE_BY_USERNAME, username);
+        return jdbcTemplate.update(Queries.DELETE_BY_USERNAME, username);
     }
 
     static class Queries {

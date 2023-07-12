@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
-public class ClientEntityRowMapper implements RowMapper<UserEntity> {
+public class UserEntityRowMapper implements RowMapper<UserEntity> {
     @Override
     public UserEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
         return new UserEntity(
