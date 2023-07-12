@@ -1,0 +1,20 @@
+app:
+  datasource:
+    main:
+      driver-class-name: org.mariadb.jdbc.Driver
+      jdbc-url: jdbc:mariadb://localhost:3306/accommodation
+      username: user
+      password: 'password'
+      pool-size: 30
+
+server:
+  error:
+    include-binding-errors: always
+    include-message: always
+
+application:
+  security:
+    jwt:
+      secret-key: WSVo2B3unbW0ctyjLpyRS3VYWX+S9zosGt2/IBk7n4ERB9loLLJhsfDPPIHoyBFJ
+      expiration: 86400000 # a day
+

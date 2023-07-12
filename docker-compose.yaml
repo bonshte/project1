@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  mariadb:
+    image: arm64v8/mariadb
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+      - MYSQL_DATABASE=accommodation
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - 3306:3306
+volumes:
+  mariadb_data:
