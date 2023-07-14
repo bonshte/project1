@@ -26,7 +26,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public AuthenticationResponse register(RegisterInput registerInput) {
-        if (!registerInput.valid()) {
+        if (!registerInput.isValid()) {
             throw new CredentialsIntegrityException("registration data not full");
         }
         UserEntity savedUser = userRepository.createClient(registerInput.getUsername(),
@@ -46,7 +46,7 @@ public class AuthenticationService {
 
 
     public AuthenticationResponse login(LoginInput loginInput) {
-        if (!loginInput.valid()) {
+        if (!loginInput.isValid()) {
             throw new CredentialsIntegrityException("login data not full");
         }
         authenticationManager.authenticate(

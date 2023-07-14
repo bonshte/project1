@@ -12,9 +12,21 @@ server:
     include-binding-errors: always
     include-message: always
 
+spring:
+  influx:
+    url: http://localhost:8086
+    token: FoqQS9O-03yn88wGXYolENm-L2OfzOSXDUBwjWS8fg3CPhE6Lo0hfVpFBVD4mUEoDlGF4nC6IPfyLAc4gTxcrw==
+    username: admin
+    password: password
+    bucket: accommodation1
+    org: Trading212
+
+google:
+  maps:
+    key: AIzaSyD1qfbnnJIIGaWn9PXLen30iKVOiFyIaKw
+
 application:
   security:
     jwt:
       secret-key: WSVo2B3unbW0ctyjLpyRS3VYWX+S9zosGt2/IBk7n4ERB9loLLJhsfDPPIHoyBFJ
       expiration: 86400000 # a day
-

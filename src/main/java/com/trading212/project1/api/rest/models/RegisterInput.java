@@ -15,7 +15,7 @@ public class RegisterInput {
     private String phoneNumber;
     private String password;
 
-    public boolean valid() {
+    public boolean isValid() {
         return username != null &&
                 email != null &&
                 phoneNumber != null &&

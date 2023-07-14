@@ -25,9 +25,7 @@ public class AuthController {
     public ResponseEntity<AuthenticationResponse> register(
             @RequestBody RegisterInput registerInput
     ) {
-        var response =  ResponseEntity.ok(authenticationService.register(registerInput));
-        SecurityContextHolder.clearContext();
-        return response;
+        return ResponseEntity.ok(authenticationService.register(registerInput));
     }
 
 
@@ -35,8 +33,7 @@ public class AuthController {
     public ResponseEntity<AuthenticationResponse> login(
             @RequestBody LoginInput loginInput
     ) {
-        var response = ResponseEntity.ok(authenticationService.login(loginInput));
-        SecurityContextHolder.clearContext();
-        return response;
+        return ResponseEntity.ok(authenticationService.login(loginInput));
+
     }
 }

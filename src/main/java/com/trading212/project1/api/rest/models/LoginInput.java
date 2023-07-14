@@ -13,7 +13,7 @@ public class LoginInput {
     private String username;
     private String password;
 
-    public boolean valid() {
+    public boolean isValid() {
         return username != null && password != null;
     }
 }
