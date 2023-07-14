@@ -1,4 +1,4 @@
-package com.trading212.project1.repositories.entities.analytical;
+package com.trading212.project1.core.models;
 
 public enum PropertyType {
     ONE_ROOM,

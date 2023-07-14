@@ -15,7 +15,7 @@ public interface UserRepository {
 
     List<UserEntity> getClients();
 
-    public UserEntity createClient(String username, String email, String phoneNumber,
+    UserEntity createClient(String username, String email, String phoneNumber,
                                    Role role, String password, LocalDate dateCreated, float rating);
 
     int deleteClientByUsername(String username);

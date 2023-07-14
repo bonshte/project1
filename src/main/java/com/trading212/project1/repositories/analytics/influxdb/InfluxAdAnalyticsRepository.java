@@ -1,10 +1,10 @@
-package com.trading212.project1.repositories.influxdb;
+package com.trading212.project1.repositories.analytics.influxdb;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApiBlocking;
 import com.influxdb.client.write.Point;
-import com.trading212.project1.repositories.AdAnalyticsRepository;
-import com.trading212.project1.repositories.entities.analytical.PropertyType;
+import com.trading212.project1.repositories.analytics.AdAnalyticsRepository;
+import com.trading212.project1.core.models.PropertyType;
 import org.springframework.stereotype.Repository;
 
 @Repository
