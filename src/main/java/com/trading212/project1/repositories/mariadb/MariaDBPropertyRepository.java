@@ -31,12 +31,7 @@ public class MariaDBPropertyRepository implements PropertyRepository {
                                          LocalDate buildDate, int bedroomCount, int bathroomCount,
                                          float propertyRating) {
 
-        return txTemplate.execute( status -> {
-            KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(conn -> {
-                PreparedStatement ps = conn.prepareStatement()
-            })
-        })
+        return  null;
     }
 
     @Override
@@ -58,6 +53,6 @@ public class MariaDBPropertyRepository implements PropertyRepository {
         private static final String CREATE_PROPERTY = """
         INSERT INTO Property(country, sublocally , neighbourhood,
          street, latitude, longitude, property_area, property_type, owner_id, build_date, 
-        """
+        """;
     }
 }
