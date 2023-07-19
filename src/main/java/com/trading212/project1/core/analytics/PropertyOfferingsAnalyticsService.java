@@ -1,4 +1,4 @@
-package com.trading212.project1.core;
+package com.trading212.project1.core.analytics;
 
 import com.trading212.project1.core.models.AdStub;
 import com.trading212.project1.repositories.analytics.PropertyOfferingsAnalyticsRepository;

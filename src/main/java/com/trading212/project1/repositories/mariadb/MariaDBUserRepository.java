@@ -29,20 +29,20 @@ public class MariaDBUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<UserEntity> getClientByUsername(String username) {
+    public Optional<UserEntity> getUser(String username) {
         return jdbcTemplate.query(Queries.SELECT_BY_USERNAME, new UserEntityRowMapper(), username)
                 .stream()
                 .findFirst();
     }
 
     @Override
-    public List<UserEntity> getClients() {
+    public List<UserEntity> getUsers() {
         return jdbcTemplate.query(Queries.SELECT_ALL_CLIENTS, new UserEntityRowMapper());
     }
 
     @Override
-    public UserEntity createClient(String username, String email, String phoneNumber, Role role,
-                                   String password, LocalDate dateCreated, float rating) {
+    public UserEntity createUser(String username, String email, String phoneNumber, Role role,
+                                 String password, LocalDate dateCreated, float rating) {
         return txTemplate.execute(status -> {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(conn -> {
@@ -63,7 +63,7 @@ public class MariaDBUserRepository implements UserRepository {
     }
 
     @Override
-    public int deleteClientByUsername(String username) {
+    public int deleteUser(String username) {
         return jdbcTemplate.update(Queries.DELETE_BY_USERNAME, username);
     }
 

@@ -20,7 +20,7 @@ public class SecurityBeans {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.getClientByUsername(username)
+        return username -> userRepository.getUser(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 

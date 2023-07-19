@@ -1,4 +1,4 @@
-package com.trading212.project1.core;
+package com.trading212.project1.core.analytics;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

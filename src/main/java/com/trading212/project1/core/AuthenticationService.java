@@ -18,10 +18,7 @@ import java.time.LocalDate;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private static final float DEFAULT_CLIENT_RATING = 2.5f;
-    private static final Role DEFAULT_ROLE = Role.USER;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
@@ -29,13 +26,11 @@ public class AuthenticationService {
         if (!registerInput.isValid()) {
             throw new CredentialsIntegrityException("registration data not full");
         }
-        UserEntity savedUser = userRepository.createClient(registerInput.getUsername(),
-                registerInput.getEmail(),
-                registerInput.getPhoneNumber(),
-                DEFAULT_ROLE,
-                this.passwordEncoder.encode(registerInput.getPassword()),
-                LocalDate.now(),
-                DEFAULT_CLIENT_RATING);
+        UserEntity savedUser = userService.createUser(
+            registerInput.getUsername(),
+            registerInput.getEmail(),
+            registerInput.getPhoneNumber(),
+            registerInput.getPassword());
 
         String jwtToken = jwtService.generateToken(savedUser);
         return AuthenticationResponse
@@ -56,9 +51,8 @@ public class AuthenticationService {
                 )
         );
 
-        var client = userRepository.getClientByUsername(loginInput.getUsername())
-                .orElseThrow();
-        String jwtToken = jwtService.generateToken(client);
+        UserEntity user = userService.getUser(loginInput.getUsername());
+        String jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse
                 .builder()
                 .token(jwtToken)
