@@ -23,7 +23,7 @@ spring:
 
 google:
   maps:
-    key: AIzaSyD1qfbnnJIIGaWn9PXLen30iKVOiFyIaKw
+    key: AIzaSyB1XS6FJb5bMEV9-cxabQjHctcfMtUyVW0
 
 application:
   security:
