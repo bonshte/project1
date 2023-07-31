@@ -4,6 +4,7 @@ import com.trading212.project1.api.rest.models.AuthenticationResponse;
 import com.trading212.project1.api.rest.models.LoginInput;
 import com.trading212.project1.api.rest.models.RegisterInput;
 import com.trading212.project1.core.exceptions.CredentialsIntegrityException;
+import com.trading212.project1.core.models.User;
 import com.trading212.project1.repositories.entities.UserEntity;
 import com.trading212.project1.core.models.Role;
 import com.trading212.project1.repositories.UserRepository;
@@ -26,36 +27,36 @@ public class AuthenticationService {
         if (!registerInput.isValid()) {
             throw new CredentialsIntegrityException("registration data not full");
         }
-        UserEntity savedUser = userService.createUser(
-            registerInput.getUsername(),
+
+        User savedUser = userService.createUser(
             registerInput.getEmail(),
-            registerInput.getPhoneNumber(),
-            registerInput.getPassword());
+            registerInput.getPassword()
+        );
 
         String jwtToken = jwtService.generateToken(savedUser);
         return AuthenticationResponse
                 .builder()
                 .token(jwtToken)
+                .userId(savedUser.getId())
                 .build();
     }
-
-
     public AuthenticationResponse login(LoginInput loginInput) {
         if (!loginInput.isValid()) {
             throw new CredentialsIntegrityException("login data not full");
         }
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginInput.getUsername(),
-                        loginInput.getPassword()
-                )
-        );
 
-        UserEntity user = userService.getUser(loginInput.getUsername());
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                loginInput.getEmail(),
+                loginInput.getPassword()
+            )
+        );
+        User user = userService.getUser(loginInput.getEmail());
         String jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse
                 .builder()
                 .token(jwtToken)
+                .userId(user.getId())
                 .build();
     }
 }

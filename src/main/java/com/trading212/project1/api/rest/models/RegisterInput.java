@@ -10,15 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegisterInput {
-    private String username;
     private String email;
-    private String phoneNumber;
     private String password;
 
-    public boolean isValid  () {
-        return username != null &&
-                email != null &&
-                phoneNumber != null &&
+    public boolean isValid() {
+        return email != null &&
                 password != null;
     }
 }

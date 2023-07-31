@@ -1,5 +1,6 @@
 package com.trading212.project1.beans;
 
+import com.trading212.project1.core.mappers.Mappers;
 import com.trading212.project1.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -20,8 +21,11 @@ public class SecurityBeans {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.getUser(username)
+        return username -> {
+            var userEntity = userRepository.getUser(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            return Mappers.fromUserEntity(userEntity);
+        };
     }
 
     @Bean

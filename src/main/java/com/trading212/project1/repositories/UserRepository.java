@@ -9,14 +9,16 @@ import java.util.Optional;
 
 public interface UserRepository {
 
-    Optional<UserEntity> getUser(String username);
+    Optional<UserEntity> getUser(String email);
 
     List<UserEntity> getUsers();
 
-    UserEntity createUser(String username, String email, String phoneNumber,
-                          Role role, String password, LocalDate dateCreated, float rating);
+    UserEntity createUser(String email,
+                          Role role, String password);
 
-    int deleteUser(String username);
+    int deleteUser(int userId);
 
+    void setSubscription(int userId, boolean subscription);
 
+    void setPremiumUser(int userId, LocalDate until);
 }

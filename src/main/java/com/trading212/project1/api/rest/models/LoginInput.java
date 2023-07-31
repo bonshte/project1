@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginInput {
-    private String username;
+    private String email;
     private String password;
 
     public boolean isValid() {
-        return username != null && password != null;
+        return email != null && password != null;
     }
 }

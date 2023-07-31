@@ -3,6 +3,9 @@ package com.trading212.project1.beans;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.zaxxer.hikari.HikariDataSource;
+import io.milvus.client.MilvusClient;
+import io.milvus.client.MilvusServiceClient;
+import io.milvus.param.ConnectParam;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,16 +44,26 @@ public class DBBeans {
     }
 
 
-    @Value("${spring.influx.url}")
-    private String influxUrl;
-
-    @Value("${spring.influx.token}")
-    private String token;
-
     @Bean
-    public InfluxDBClient influxDBClient() {
-        return InfluxDBClientFactory.create(influxUrl, token.toCharArray());
+    public MilvusServiceClient milvusClient() {
+        ConnectParam connectParam = ConnectParam.newBuilder()
+                .withHost("localHost")
+                .withPort(19530)
+                .withAuthorization("root", "Milvus")
+                .build();
+        return new MilvusServiceClient(connectParam);
     }
+
+//    @Value("${spring.influx.url}")
+//    private String influxUrl;
+//
+//    @Value("${spring.influx.token}")
+//    private String token;
+//
+//    @Bean
+//    public InfluxDBClient influxDBClient() {
+//        return InfluxDBClientFactory.create(influxUrl, token.toCharArray());
+//    }
 
 
 }

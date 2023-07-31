@@ -9,7 +9,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
-import java.sql.Date;
+
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDate;
@@ -19,7 +19,6 @@ import java.util.Optional;
 
 @Repository
 public class MariaDBUserRepository implements UserRepository {
-
     private TransactionTemplate txTemplate;
     private JdbcTemplate jdbcTemplate;
 
@@ -29,63 +28,88 @@ public class MariaDBUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<UserEntity> getUser(String username) {
-        return jdbcTemplate.query(Queries.SELECT_BY_USERNAME, new UserEntityRowMapper(), username)
+    public Optional<UserEntity> getUser(String email) {
+        return jdbcTemplate.query(Queries.SELECT_BY_EMAIL, new UserEntityRowMapper(), email)
                 .stream()
                 .findFirst();
     }
 
     @Override
     public List<UserEntity> getUsers() {
-        return jdbcTemplate.query(Queries.SELECT_ALL_CLIENTS, new UserEntityRowMapper());
+        return jdbcTemplate.query(Queries.SELECT_ALL_USERS, new UserEntityRowMapper());
     }
 
     @Override
-    public UserEntity createUser(String username, String email, String phoneNumber, Role role,
-                                 String password, LocalDate dateCreated, float rating) {
+    public UserEntity createUser(String email, Role role,
+                                 String password) {
         return txTemplate.execute(status -> {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(conn -> {
-                PreparedStatement ps = conn.prepareStatement(Queries.CREATE_CLIENT, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, username);
-                ps.setString(2, email);
-                ps.setString(3, phoneNumber);
-                ps.setString(4, password);
-                ps.setString(5, role.roleName);
-                ps.setDate(6, Date.valueOf(dateCreated));
-                ps.setFloat(7, rating);
+                PreparedStatement ps = conn.prepareStatement(Queries.CREATE_USER, Statement.RETURN_GENERATED_KEYS);
+                ps.setString(1, email);
+                ps.setString(2, password);
+                ps.setString(3, role.roleName);
+                ps.setBoolean(4, false);
+
+
                 return ps;
             }, keyHolder);
             Integer id = Objects.requireNonNull(keyHolder.getKey()).intValue();
 
-            return new UserEntity(id, username, email, phoneNumber, password, dateCreated, rating, role);
+            UserEntity createdUser = new UserEntity();
+            createdUser.setId(id);
+            createdUser.setEmail(email);
+            createdUser.setPassword(password);
+            createdUser.setRole(role);
+            createdUser.setSubscribed(false);
+            return createdUser;
         });
     }
 
     @Override
-    public int deleteUser(String username) {
-        return jdbcTemplate.update(Queries.DELETE_BY_USERNAME, username);
+    public void setSubscription(int userId, boolean subscription) {
+        jdbcTemplate.update(Queries.UPDATE_USER_SUBSCRIPTION, userId, subscription);
+    }
+
+    @Override
+    public void setPremiumUser(int userId, LocalDate until) {
+        jdbcTemplate.update(Queries.UPDATE_USER_PREMIUM, until, userId);
+    }
+
+    @Override
+    public int deleteUser(int userId) {
+        return jdbcTemplate.update(Queries.DELETE_BY_ID, userId);
     }
 
     static class Queries {
-        private static final String SELECT_BY_USERNAME = """
-            SELECT *
-            FROM User
-            WHERE username = ?;
+        private static final String UPDATE_USER_PREMIUM = """
+            UPDATE user
+            SET premium_until = ?
+            WHERE user_id = ?
+            """;
+        private static final String UPDATE_USER_SUBSCRIPTION = """
+            UPDATE user
+            SET is_subscribed = ?
+            WHERE user_id = ?
+            """;
+        private static final String SELECT_BY_EMAIL = """
+            SELECT user_id, email, password, premium_until, criteria, is_subscribed, role
+            FROM user
+            WHERE email = ?;
             """;
 
-        private static final String SELECT_ALL_CLIENTS = """
-                SELECT *
-                FROM User;
+        private static final String SELECT_ALL_USERS = """
+                SELECT user_id, email, password, premium_until, criteria, is_subscribed, role
+                FROM user;
                 """;
 
-        private static final String DELETE_BY_USERNAME = """
-                DELETE FROM User
-                WHERE username = ?;
+        private static final String DELETE_BY_ID = """
+                DELETE FROM user
+                WHERE user_id = ?;
                 """;
-        private static final String CREATE_CLIENT = """
-                INSERT INTO User(username,email,phone_number,password, role, created_at, user_rating)
-                VALUES(?,?,?,?,?,?,?);
+        private static final String CREATE_USER = """
+                INSERT INTO user(email,password, role, is_subscribed)
+                VALUES(?,?,?,?);
                 """;
     }
 }
