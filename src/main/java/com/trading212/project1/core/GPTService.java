@@ -29,7 +29,7 @@ public class GPTService {
     private static final String API_ENDPOINT = "https://api.openai.com/v1/chat/completions";
     private static final String GPT_MODEL_LATEST = "gpt-3.5-turbo";
     private static final String GPT_MODEL_0301 = "gpt-3.5-turbo-0301";
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "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";
 
     private static final JsonParser JSON_PARSER = new JsonParser();
     public static void main(String[] args) {
@@ -48,6 +48,7 @@ public class GPTService {
             } else {
                 GPTMessageDTO responseDTO = service.extractContent(response.body());
                 messageHistory.add(responseDTO);
+                System.out.println(responseDTO.content);
             }
         }
     }
@@ -63,6 +64,7 @@ public class GPTService {
         try {
             String jsonBody = generateChatRequestBody(oldMessages, GPT_MODEL_LATEST);
             HttpResponse<String> response = sendPostRequest(API_ENDPOINT, API_KEY, jsonBody);
+            System.out.println(response.body());
             validateResponse(response);
             return response;
         } catch (Exception e) {
@@ -162,10 +164,6 @@ public class GPTService {
                 "forRent", Map.of(
                         "type", "boolean",
                         "description", "true if the client is looking for apartment to rent, false if he is looking for apartment to buy"
-                ),//experimenting with the district
-                "district", Map.of(
-                        "type", "string",
-                        "description", "the district in which the town or city is"
                 ),
                 "town", Map.of(
                         "type", "string",
@@ -211,6 +209,7 @@ public class GPTService {
         Map<String, Object> requestBody = Map.of(
                 "model", modelName,
                 "messages", messagesInBody,
+                "temperature", 0.1,
                 "functions", List.of(function),
                 "function_call", "auto"
         );
@@ -245,7 +244,6 @@ public class GPTService {
 
     static class AGENT {
         private static final String DESCRIPTION_AGENT_SUMMARIZER = "You are agent who extracts information from apartment description. You want to extract only the features from the description such as proximity to stores, schools, buildings or new furniture, internet connection, security etc. You will not include any information about the broker, agency, phone numbers or advertisements of other properties. You will not include the price or size of the apartment. You will reply only with the extracted features in a informational sentences and you will not give any explanations. If no specific features were mentioned you will reply with \"none\".";
-        private static final String RECOMMENDATION_AGENT_MESSAGE = "You are an agent who gathers information from users about the desired apartment they want to rent or buy. You want to collect data for town (city or village), district, neighbourhoods, price, currency, square meters, type of apartment, additional features. You will guide the client in providing information about what apartment they want.If the user does not specify currency he means bgn. When user wants the apartment to be near or close to something treat that as a feature.If the user provides a range for price or square meters take the average.";
-
+        private static final String RECOMMENDATION_AGENT_MESSAGE = "You are an agent who gathers information from users about the desired apartment they want to rent or buy. You want to collect data for town (city or village), neighbourhoods, price, currency, square meters, type of apartment, additional features. You will guide the client in providing information about what apartment they want.If the user does not specify currency he means bgn. When user wants the apartment to be near or close to something treat that as a feature.If the user provides a range for price or square meters take the average. You will not answer any questions unrelated to apartment search.";
     }
 }
