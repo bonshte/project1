@@ -1,10 +1,10 @@
 package com.trading212.project1.core;
 
+import com.github.pemistahl.lingua.api.Language;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.springframework.stereotype.Service;
-
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -14,17 +14,34 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Service
 public class DeepLTranslationService {
     private static final String DEEPL_END_POINT = "https://api-free.deepl.com/v2/translate";
     private static final String API_KEY = "5a53ed53-d5d3-5298-a1c3-39db9275eaa6:fx";
+
     private static final String ENG_LANG_CODE = "EN";
+    private static final String BG_LANG_CIDE = "BG";
     private static final int OK_CODE_RANGE_START = 200;
     private static final int OK_CODE_RANGE_END = 299;
 
     public String translateToEnglish(String text) {
         try {
             HttpResponse<String> response = sendTranslationRequest(text, ENG_LANG_CODE);
+            handleResponse(response);
+            return extractTranslation(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String translateToLanguage(String text, Language language) {
+        try {
+            String langCode = getLangCode(language);
+            if (langCode.equals("UNKNOWN")) {
+                throw new RuntimeException("not supported language for translation");
+            }
+            HttpResponse<String> response = sendTranslationRequest(text, getLangCode(language));
             handleResponse(response);
             return extractTranslation(response);
         } catch (Exception e) {
@@ -39,6 +56,11 @@ public class DeepLTranslationService {
         }
         return translations;
     }
+
+    public boolean isTranslateSupported(Language language) {
+        return !getLangCode(language).equals("UNKNOWN");
+    }
+
 
     private String extractTranslation(HttpResponse<String> response) {
         String responseBody = response.body();
@@ -73,10 +95,38 @@ public class DeepLTranslationService {
                 + "&target_lang=" + URLEncoder.encode(targetLang, StandardCharsets.UTF_8);
     }
 
-
-    public static void main(String[] args) {
-        String textToTranslate = "търся си готин апартамент за 500 евро на месец в Драгалевци близо до метро";
-        DeepLTranslationService main = new DeepLTranslationService();
-        System.out.println(main.translateToEnglish(textToTranslate));
+    private String getLangCode(Language language) {
+        return switch (language) {
+            case BULGARIAN -> "BG";
+            case CZECH -> "CS";
+            case DANISH -> "DA";
+            case GERMAN -> "DE";
+            case GREEK -> "EL";
+            case ENGLISH -> "EN";
+            case SPANISH -> "ES";
+            case ESTONIAN -> "ET";
+            case FINNISH -> "FI";
+            case FRENCH -> "FR";
+            case HUNGARIAN -> "HU";
+            case INDONESIAN -> "ID";
+            case ITALIAN -> "IT";
+            case JAPANESE -> "JA";
+            case KOREAN -> "KO";
+            case LITHUANIAN -> "LT";
+            case LATVIAN -> "LV";
+            case DUTCH -> "NL";
+            case POLISH -> "PL";
+            case PORTUGUESE -> "PT";
+            case ROMANIAN -> "RO";
+            case RUSSIAN -> "RU";
+            case SLOVAK -> "SK";
+            case SLOVENE -> "SL";
+            case SWEDISH -> "SV";
+            case TURKISH -> "TR";
+            case UKRAINIAN -> "UK";
+            case CHINESE -> "ZH";
+            default -> "UNKNOWN";
+        };
     }
+
 }

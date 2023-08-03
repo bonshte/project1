@@ -12,11 +12,7 @@ public class LanguageDetectionService {
         this.languageDetector = languageDetector;
     }
 
-    public boolean checkForEnglish(String text) {
-        return detectLanguage(text) == Language.ENGLISH;
-    }
-
-    private Language detectLanguage(String text) {
+    public Language detectLanguage(String text) {
         return languageDetector.detectLanguageOf(text);
     }
 }
