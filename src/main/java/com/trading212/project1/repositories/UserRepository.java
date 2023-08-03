@@ -18,7 +18,6 @@ public interface UserRepository {
 
     int deleteUser(int userId);
 
-    void setSubscription(int userId, boolean subscription);
 
     void setPremiumUser(int userId, LocalDate until);
 }

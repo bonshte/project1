@@ -22,7 +22,5 @@ public class UserEntity {
     private String email;
     private String password;
     private LocalDate premiumUntil;
-    private String criteria;
-    private boolean isSubscribed;
     private Role role;
 }

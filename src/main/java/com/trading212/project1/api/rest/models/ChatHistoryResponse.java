@@ -13,6 +13,5 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatHistoryResponse {
-    private List<ChatMessage> messageHistory;
-    private int chatSession;
+    private List<ChatMessageResponse> messageHistory;
 }

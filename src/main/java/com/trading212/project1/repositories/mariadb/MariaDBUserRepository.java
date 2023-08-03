@@ -49,8 +49,6 @@ public class MariaDBUserRepository implements UserRepository {
                 ps.setString(1, email);
                 ps.setString(2, password);
                 ps.setString(3, role.roleName);
-                ps.setBoolean(4, false);
-
 
                 return ps;
             }, keyHolder);
@@ -61,15 +59,10 @@ public class MariaDBUserRepository implements UserRepository {
             createdUser.setEmail(email);
             createdUser.setPassword(password);
             createdUser.setRole(role);
-            createdUser.setSubscribed(false);
             return createdUser;
         });
     }
 
-    @Override
-    public void setSubscription(int userId, boolean subscription) {
-        jdbcTemplate.update(Queries.UPDATE_USER_SUBSCRIPTION, userId, subscription);
-    }
 
     @Override
     public void setPremiumUser(int userId, LocalDate until) {
@@ -87,19 +80,15 @@ public class MariaDBUserRepository implements UserRepository {
             SET premium_until = ?
             WHERE user_id = ?
             """;
-        private static final String UPDATE_USER_SUBSCRIPTION = """
-            UPDATE user
-            SET is_subscribed = ?
-            WHERE user_id = ?
-            """;
+
         private static final String SELECT_BY_EMAIL = """
-            SELECT user_id, email, password, premium_until, criteria, is_subscribed, role
+            SELECT user_id, email, password, premium_until, role
             FROM user
             WHERE email = ?;
             """;
 
         private static final String SELECT_ALL_USERS = """
-                SELECT user_id, email, password, premium_until, criteria, is_subscribed, role
+                SELECT user_id, email, password, premium_until,  role
                 FROM user;
                 """;
 
@@ -108,8 +97,8 @@ public class MariaDBUserRepository implements UserRepository {
                 WHERE user_id = ?;
                 """;
         private static final String CREATE_USER = """
-                INSERT INTO user(email,password, role, is_subscribed)
-                VALUES(?,?,?,?);
+                INSERT INTO user(email,password, role)
+                VALUES(?,?,?);
                 """;
     }
 }

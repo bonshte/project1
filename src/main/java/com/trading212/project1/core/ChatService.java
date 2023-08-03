@@ -119,7 +119,7 @@ public class ChatService {
             .toList();
     }
 
-    public List<ChatSession> processSessionsRequest(int userId) {
+    public List<ChatSession> getUserChatSessions(int userId) {
         if (!isSelfDataRequest(userId)) {
             throw new UnauthorizedException("can not access data for another user");
         }

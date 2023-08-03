@@ -20,8 +20,6 @@ public class UserEntityRowMapper implements RowMapper<UserEntity> {
         if (premiumUntilString != null) {
             userEntity.setPremiumUntil(LocalDate.parse(premiumUntilString));
         }
-        userEntity.setCriteria(rs.getString("criteria"));
-        userEntity.setSubscribed(rs.getBoolean("is_subscribed"));
         userEntity.setRole(Role.valueOf(rs.getString("role")));
         return userEntity;
     }

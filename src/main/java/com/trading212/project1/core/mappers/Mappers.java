@@ -14,8 +14,6 @@ public class Mappers {
             userEntity.getEmail(),
             userEntity.getPassword(),
             userEntity.getPremiumUntil(),
-            userEntity.getCriteria(),
-            userEntity.isSubscribed(),
             userEntity.getRole()
         );
     }

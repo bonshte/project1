@@ -23,8 +23,6 @@ public class User implements UserDetails {
     private String email;
     private String password;
     private LocalDate premiumUntil;
-    private String criteria;
-    private boolean isSubscribed;
     private Role role;
 
     @Override

@@ -38,7 +38,7 @@ public class ScrapeCron {
     );
 
 
-    @Scheduled(cron = "0 54 * * * *")
+    @Scheduled(cron = "0 01 * * * *")
     public void scrapeImotBG() {
         ScrapingResult rentScrapeResult = scrapingService.scrape(BURGAS_RENT_SCRAPE_CONFIG);
         List<AdStub> apartmentsForRent = rentScrapeResult.getScrapedAds();

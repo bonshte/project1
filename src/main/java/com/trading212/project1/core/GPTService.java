@@ -48,7 +48,7 @@ public class GPTService {
             } else {
                 GPTMessageDTO responseDTO = service.extractContent(response.body());
                 messageHistory.add(responseDTO);
-                System.out.println(responseDTO.content);
+
             }
         }
     }
@@ -64,7 +64,7 @@ public class GPTService {
         try {
             String jsonBody = generateChatRequestBody(oldMessages, GPT_MODEL_LATEST);
             HttpResponse<String> response = sendPostRequest(API_ENDPOINT, API_KEY, jsonBody);
-            System.out.println(response.body());
+
             validateResponse(response);
             return response;
         } catch (Exception e) {
@@ -216,7 +216,7 @@ public class GPTService {
 
         try {
             String jsonBody = new ObjectMapper().writeValueAsString(requestBody);
-            System.out.println(jsonBody);
+
             return jsonBody;
         } catch (JsonProcessingException e) {
             throw new RuntimeException("problem with generating json body for request to GPT");

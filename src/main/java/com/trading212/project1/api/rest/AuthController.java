@@ -1,11 +1,10 @@
 package com.trading212.project1.api.rest;
 
 import com.trading212.project1.api.rest.models.AuthenticationResponse;
-import com.trading212.project1.api.rest.models.LoginInput;
-import com.trading212.project1.api.rest.models.RegisterInput;
+import com.trading212.project1.api.rest.models.input.LoginInput;
+import com.trading212.project1.api.rest.models.input.RegisterInput;
 import com.trading212.project1.core.AuthenticationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
