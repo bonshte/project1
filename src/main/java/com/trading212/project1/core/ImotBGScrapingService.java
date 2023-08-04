@@ -3,8 +3,8 @@ package com.trading212.project1.core;
 import com.trading212.project1.core.exceptions.NotRentingAdException;
 import com.trading212.project1.core.exceptions.ScrapeFormatMissMatchException;
 import com.trading212.project1.core.exceptions.SearchFilterScrapeException;
-import com.trading212.project1.core.models.AdStub;
-import com.trading212.project1.core.models.SearchFilter;
+import com.trading212.project1.core.models.scraping.ScrapedAd;
+import com.trading212.project1.core.models.scraping.ScrapeSearchFilter;
 import com.trading212.project1.core.mappers.ImotBGAdMapper;
 import com.trading212.project1.core.models.scraping.*;
 import org.jsoup.Jsoup;
@@ -59,8 +59,8 @@ public class ImotBGScrapingService {
             ExpectedConditions.elementToBeClickable(By.cssSelector(COOKIES_ACCEPT_BUTTON_SELECTOR)));
         ((JavascriptExecutor)driver).executeScript("arguments[0].click();", popupButton);
 
-        List<AdStub> totalScrapedAds = new LinkedList<>();
-        List<SearchFilter> failedFilters = new LinkedList<>();
+        List<ScrapedAd> totalScrapedAds = new LinkedList<>();
+        List<ScrapeSearchFilter> failedFilters = new LinkedList<>();
 
         for (var filter : scrapeConfig.getFilters()) {
             driver.get(scrapeConfig.getScrapeUrl());
@@ -102,7 +102,7 @@ public class ImotBGScrapingService {
             sleep(TIME_TO_LOAD_JS);
             String currentUrl = driver.getCurrentUrl();
             try {
-                List<AdStub> scrappedResults = scrapeResultPages(currentUrl, scrapeConfig);
+                List<ScrapedAd> scrappedResults = scrapeResultPages(currentUrl, scrapeConfig);
                 totalScrapedAds.addAll(scrappedResults);
             } catch (SearchFilterScrapeException e) {
                 failedFilters.add(filter);
@@ -112,7 +112,7 @@ public class ImotBGScrapingService {
         return new ScrapingResult(totalScrapedAds, failedFilters);
     }
 
-    private static List<AdStub> scrapeResultPages(
+    private static List<ScrapedAd> scrapeResultPages(
         String firstPageUrl,
         ScrapeConfig scrapeConfig) {
         int pages = 1;
@@ -129,7 +129,7 @@ public class ImotBGScrapingService {
             e.printStackTrace();
             throw new SearchFilterScrapeException("could not scrape filter for "  + firstPageUrl);
         }
-        List<AdStub> scrapedAds = new LinkedList<>();
+        List<ScrapedAd> scrapedAds = new LinkedList<>();
         String baseFilterSearchUrl = firstPageUrl.substring(0, firstPageUrl.length() - 1);
         for (int i = 1; i <= pages; ++i) {
             String currentUrl = baseFilterSearchUrl + i;
@@ -138,10 +138,10 @@ public class ImotBGScrapingService {
         }
         return scrapedAds;
     }
-    private static List<AdStub> scrapeResultPage(
+    private static List<ScrapedAd> scrapeResultPage(
         String url,
         ScrapeConfig scrapeConfig) {
-        List<AdStub> adsScraped = new LinkedList<>();
+        List<ScrapedAd> adsScraped = new LinkedList<>();
         try {
             Document doc = Jsoup.connect(url).get();
             var allTables = doc.select("table");
@@ -177,7 +177,7 @@ public class ImotBGScrapingService {
         }
         return adsScraped;
     }
-    private static AdStub scrapeAdPage(
+    private static ScrapedAd scrapeAdPage(
         String link,
         ScrapeConfig scrapeConfig) {
         try {

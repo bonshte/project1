@@ -2,7 +2,7 @@ package com.trading212.project1.core.mappers;
 
 import com.trading212.project1.core.exceptions.NotRentingAdException;
 import com.trading212.project1.core.exceptions.ScrapeFormatMissMatchException;
-import com.trading212.project1.core.models.AdStub;
+import com.trading212.project1.core.models.scraping.ScrapedAd;
 import com.trading212.project1.core.models.scraping.AccommodationType;
 import com.trading212.project1.core.models.scraping.Currency;
 import org.jsoup.nodes.Document;
@@ -23,23 +23,23 @@ public class ImotBGAdMapper {
         throw new RuntimeException("should not be instantiated");
     }
 
-    public static AdStub fromDocument(Document document, String documentUrl) {
-        AdStub adStub = new AdStub();
+    public static ScrapedAd fromDocument(Document document, String documentUrl) {
+        ScrapedAd scrapedAd = new ScrapedAd();
 
-        extractUniqueLink(adStub, documentUrl);
+        extractUniqueLink(scrapedAd, documentUrl);
 
         Element accommodationTypeElement = document.selectFirst(SelectorPath.ACCOMMODATION_TYPE_SELECTOR);
         if (accommodationTypeElement == null) {
             throw new ScrapeFormatMissMatchException("cannot extract accommodation type");
         }
-        extractAccommodationType(adStub, accommodationTypeElement);
+        extractAccommodationType(scrapedAd, accommodationTypeElement);
 
 
         Element locationElement = document.selectFirst(SelectorPath.LOCATION_SELECTOR);
         if (locationElement == null) {
             throw new ScrapeFormatMissMatchException("cannot extract location");
         }
-        extractLocation(adStub, locationElement);
+        extractLocation(scrapedAd, locationElement);
 
         Element priceElement = document.selectFirst(SelectorPath.PRICE_SELECTOR);
         if (priceElement == null) {
@@ -48,7 +48,7 @@ public class ImotBGAdMapper {
                 throw new ScrapeFormatMissMatchException("cannot fetch price");
             }
         }
-        extractPrice(adStub, priceElement);
+        extractPrice(scrapedAd, priceElement);
 
         List<String> imageUrls = new ArrayList<>();
         Element mainPictureElement = document.selectFirst(SelectorPath.MAIN_PICTURE_SELECTOR);
@@ -70,17 +70,17 @@ public class ImotBGAdMapper {
             }
         }
         if (!imageUrls.isEmpty()) {
-            adStub.setImageUrls(imageUrls);
+            scrapedAd.setImageUrls(imageUrls);
         }
 
         Element adParamElement = document.selectFirst(SelectorPath.AD_PARAM_SELECTOR);
         if (adParamElement != null) {
-            extractAdParam(adStub, adParamElement);
+            extractAdParam(scrapedAd, adParamElement);
         }
 
         Element descriptionElement = document.selectFirst(SelectorPath.DESCRIPTION_SELECTOR);
         if (descriptionElement != null) {
-            extractDescription(adStub, descriptionElement);
+            extractDescription(scrapedAd, descriptionElement);
         }
 
         Element featuresHeadingElement = document.selectFirst(SelectorPath.FEATURES_HEADING_SELECTOR);
@@ -88,13 +88,13 @@ public class ImotBGAdMapper {
         if (featuresHeadingElement != null && featuresHeadingElement.text().startsWith("Особености")) {
             Element featuresElement = document.selectFirst((SelectorPath.FEATURES_SELECTOR));
             if (featuresElement != null) {
-                extractFeatures(adStub, featuresElement);
+                extractFeatures(scrapedAd, featuresElement);
             }
         }
 
         Element phoneElement = document.selectFirst(SelectorPath.PHONE_NUMBER_SELECTOR);
         if (phoneElement != null) {
-            extractPhoneNumber(adStub, phoneElement);
+            extractPhoneNumber(scrapedAd, phoneElement);
         }
 
         Element propertyProviderElement = document.selectFirst(SelectorPath.PROVIDER_SELECTOR);
@@ -103,30 +103,30 @@ public class ImotBGAdMapper {
         }
 
         if (propertyProviderElement != null) {
-            extractProvider(adStub, propertyProviderElement);
+            extractProvider(scrapedAd, propertyProviderElement);
         }
 
-        System.out.println(adStub);
-        return adStub;
+        System.out.println(scrapedAd);
+        return scrapedAd;
     }
 
-    private static void extractUniqueLink(AdStub adStub, String url) {
+    private static void extractUniqueLink(ScrapedAd scrapedAd, String url) {
         Matcher matcher = UNIQUE_ID_REGEX_PATTERN.matcher(url);
 
         if (matcher.find()) {
             String websiteId = matcher.group(1);
             System.out.println(IMOTBG_BASE_URL + websiteId);
-            adStub.setLink(IMOTBG_BASE_URL + websiteId);
+            scrapedAd.setLink(IMOTBG_BASE_URL + websiteId);
         } else {
             throw new ScrapeFormatMissMatchException("miss match with url ID");
         }
     }
 
-    private static void extractProvider(AdStub adStub, Element providerElement) {
+    private static void extractProvider(ScrapedAd scrapedAd, Element providerElement) {
         String text = providerElement.text();
-        adStub.setPropertyProvider(text);
+        scrapedAd.setPropertyProvider(text);
     }
-    private static void extractFeatures(AdStub adStub, Element featuresElement) {
+    private static void extractFeatures(ScrapedAd scrapedAd, Element featuresElement) {
         Elements divElements = featuresElement.select("div");
         List<String> features = new ArrayList<>();
         for (Element div : divElements) {
@@ -145,20 +145,20 @@ public class ImotBGAdMapper {
             }
             features.add(feature);
         }
-        adStub.setFeatures(features);
+        scrapedAd.setFeatures(features);
     }
-    private static void extractPhoneNumber(AdStub adStub, Element phoneNumberElement) {
+    private static void extractPhoneNumber(ScrapedAd scrapedAd, Element phoneNumberElement) {
         String number = phoneNumberElement.text().trim();
-        adStub.setPhoneNumber(number);
+        scrapedAd.setPhoneNumber(number);
     }
-    private static void extractDescription(AdStub adStub, Element descriptionElement) {
+    private static void extractDescription(ScrapedAd scrapedAd, Element descriptionElement) {
         String description = descriptionElement.text().replace("<br>", System.lineSeparator())
                 .replace("Виж по-малко...", "")
                     .replace("Виж повече", "");
-        adStub.setDescription(description);
+        scrapedAd.setDescription(description);
     }
 
-    private static void extractAdParam(AdStub adStub, Element adParamElement) {
+    private static void extractAdParam(ScrapedAd scrapedAd, Element adParamElement) {
         Elements divElements = adParamElement.children();
         for (Element div : divElements) {
             String text = div.ownText().trim();
@@ -171,7 +171,7 @@ public class ImotBGAdMapper {
             switch (text) {
                 case "Площ":
                     value = value.split(" ")[0];
-                    adStub.setSize(Integer.parseInt(value));
+                    scrapedAd.setSize(Integer.parseInt(value));
                     break;
                 case "Етаж":
                     value = value.trim();
@@ -180,21 +180,21 @@ public class ImotBGAdMapper {
                         throw new ScrapeFormatMissMatchException("error with floors");
                     }
                     if (floorComponents[0].startsWith("Партер")) {
-                        adStub.setFloor(1);
+                        scrapedAd.setFloor(1);
                     } else {
                         String[] floor = floorComponents[0].split("-");
-                        adStub.setFloor(Integer.parseInt(floor[0]));
+                        scrapedAd.setFloor(Integer.parseInt(floor[0]));
                     }
-                    adStub.setTotalFloors(Integer.parseInt(floorComponents[floorComponents.length - 1]));
+                    scrapedAd.setTotalFloors(Integer.parseInt(floorComponents[floorComponents.length - 1]));
                     break;
                 case "ТEЦ":
                     if (value.equals("ДА")) {
-                        adStub.setThermalPowerPlantProvided(true);
+                        scrapedAd.setThermalPowerPlantProvided(true);
                     }
                     break;
                 case "Газ":
                     if (value.equals("ДА")) {
-                        adStub.setGasProvided(true);
+                        scrapedAd.setGasProvided(true);
                     }
                     break;
                 case "Строителство":
@@ -212,8 +212,8 @@ public class ImotBGAdMapper {
                     }
                     if (constructionComponents.length > 1) {
                         Integer yearBuilt = Integer.parseInt(constructionComponents[1]);
-                        adStub.setConstruction(constructionType);
-                        adStub.setYearBuilt(yearBuilt);
+                        scrapedAd.setConstruction(constructionType);
+                        scrapedAd.setYearBuilt(yearBuilt);
                     }
                     break;
                 default:
@@ -222,7 +222,7 @@ public class ImotBGAdMapper {
         }
     }
 
-    private static void extractLocation(AdStub adStub, Element locationElement) {
+    private static void extractLocation(ScrapedAd scrapedAd, Element locationElement) {
         String locationText = locationElement.text().trim();
         boolean inDistrict = false;
         if (locationText.contains("област")) {
@@ -236,11 +236,11 @@ public class ImotBGAdMapper {
         if (inDistrict) {
             String town = addressComponents[1].trim();
             town = replaceAcronymsInTown(town);
-            adStub.setTown(town);
-            adStub.setDistrict(addressComponents[0].trim());
+            scrapedAd.setTown(town);
+            scrapedAd.setDistrict(addressComponents[0].trim());
         } else {
-            adStub.setTown(addressComponents[0].trim());
-            adStub.setNeighbourhood(addressComponents[1].trim());
+            scrapedAd.setTown(addressComponents[0].trim());
+            scrapedAd.setNeighbourhood(addressComponents[1].trim());
         }
     }
 
@@ -253,32 +253,32 @@ public class ImotBGAdMapper {
             .replace("гр.", "град");
     }
 
-    private static void extractAccommodationType(AdStub adStub, Element accommodationTypeElement) {
+    private static void extractAccommodationType(ScrapedAd scrapedAd, Element accommodationTypeElement) {
         String text = accommodationTypeElement.text();
         String[] accommodationComponents = text.split(" ");
         String accommodationTypeString = accommodationComponents[accommodationComponents.length - 1];
         switch (accommodationTypeString) {
-            case "1-СТАЕН": adStub.setAccommodationType(AccommodationType.ONE_ROOM);
+            case "1-СТАЕН": scrapedAd.setAccommodationType(AccommodationType.ONE_ROOM);
             break;
-            case "2-СТАЕН": adStub.setAccommodationType(AccommodationType.TWO_ROOM);
+            case "2-СТАЕН": scrapedAd.setAccommodationType(AccommodationType.TWO_ROOM);
             break;
-            case "3-СТАЕН": adStub.setAccommodationType(AccommodationType.THREE_ROOM);
+            case "3-СТАЕН": scrapedAd.setAccommodationType(AccommodationType.THREE_ROOM);
             break;
-            case "4-СТАЕН": adStub.setAccommodationType(AccommodationType.FOUR_ROOM);
+            case "4-СТАЕН": scrapedAd.setAccommodationType(AccommodationType.FOUR_ROOM);
             break;
-            case "МНОГОСТАЕН": adStub.setAccommodationType(AccommodationType.MANY_ROOMS);
+            case "МНОГОСТАЕН": scrapedAd.setAccommodationType(AccommodationType.MANY_ROOMS);
             break;
-            case "МЕЗОНЕТ": adStub.setAccommodationType( AccommodationType.MAISONETTE);
+            case "МЕЗОНЕТ": scrapedAd.setAccommodationType( AccommodationType.MAISONETTE);
             break;
-            case "ТАВАН" : adStub.setAccommodationType(AccommodationType.STUDIO);
+            case "ТАВАН" : scrapedAd.setAccommodationType(AccommodationType.STUDIO);
             break;
-            case "СТАЯ" : adStub.setAccommodationType(AccommodationType.ROOM);
+            case "СТАЯ" : scrapedAd.setAccommodationType(AccommodationType.ROOM);
             break;
             default: throw new ScrapeFormatMissMatchException("unknown accommodation type");
         }
     }
 
-    private static void extractPrice(AdStub adStub, Element priceElement) {
+    private static void extractPrice(ScrapedAd scrapedAd, Element priceElement) {
         String priceText = priceElement.text().trim();
         if (priceText.contains("При запитване")) {
             throw new NotRentingAdException("no price for this ad");
@@ -297,16 +297,16 @@ public class ImotBGAdMapper {
             priceString = priceComponents[0] + priceComponents[1];
         }
         Integer price = Integer.parseInt(priceString);
-        adStub.setPrice(price);
+        scrapedAd.setPrice(price);
         switch (currencyString) {
             case "лв.":
-                adStub.setCurrency(Currency.BGN);
+                scrapedAd.setCurrency(Currency.BGN);
                 break;
             case "EUR":
-                adStub.setCurrency(Currency.EURO);
+                scrapedAd.setCurrency(Currency.EURO);
                 break;
             case "$":
-                adStub.setCurrency(Currency.USD);
+                scrapedAd.setCurrency(Currency.USD);
                 break;
             default:
                 throw new ScrapeFormatMissMatchException("unknown currency");

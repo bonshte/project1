@@ -14,5 +14,7 @@ import java.time.LocalDateTime;
 public class ChatSessionRecommendationEntity {
     private int chatSessionId;
     private Long adId;
+    private int userId;
     private LocalDateTime recommendedAt;
+    private boolean forSale;
 }

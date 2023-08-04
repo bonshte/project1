@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AdEntity {
-    private Long id;
+    private Long adId;
     private String town;
     private String neighbourhood;
     private String district;
@@ -27,10 +27,12 @@ public class AdEntity {
     private Integer totalFloors;
     private Boolean gasProvided;
     private Boolean thermalPowerPlantProvided;
+    private List<String> features;
     private String phoneNumber;
     private Integer yearBuilt;
     private String link;
     private String construction;
     private String description;
+    private List<String> imageUrls;
     private Boolean forSale;
 }

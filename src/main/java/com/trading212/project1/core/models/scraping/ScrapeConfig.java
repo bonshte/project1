@@ -1,7 +1,5 @@
 package com.trading212.project1.core.models.scraping;
 
-import com.trading212.project1.core.models.AdStub;
-import com.trading212.project1.core.models.SearchFilter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +17,6 @@ import java.util.function.Function;
 public class ScrapeConfig {
     private String scrapeUrl;
     private Function<AccommodationType, String> accommodationTypeCodeGenerator;
-    private BiFunction<Document, String, AdStub> adExtractor;
-    private List<SearchFilter> filters;
+    private BiFunction<Document, String, ScrapedAd> adExtractor;
+    private List<ScrapeSearchFilter> filters;
 }

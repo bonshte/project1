@@ -1,6 +1,6 @@
 package com.trading212.project1.core;
 
-import com.trading212.project1.core.models.SearchFilter;
+import com.trading212.project1.core.models.scraping.ScrapeSearchFilter;
 import com.trading212.project1.core.models.scraping.AccommodationType;
 import com.trading212.project1.core.models.scraping.Location;
 
@@ -12,11 +12,11 @@ public final class ImotBGUtils {
     public static final String PURCHASE_SCRAPE_URL = "https://www.imot.bg/pcgi/imot.cgi?act=2&rub=1";
 
 
-    public static final List<SearchFilter> ALL_RENT_SEARCH_FILTERS = new ArrayList<>();
-    public static final List<SearchFilter> ALL_PURCHASE_SEARCH_FILTERS = new ArrayList<>();
+    public static final List<ScrapeSearchFilter> ALL_RENT_SEARCH_FILTERS = new ArrayList<>();
+    public static final List<ScrapeSearchFilter> ALL_PURCHASE_SEARCH_FILTERS = new ArrayList<>();
 
-    public static final List<SearchFilter> BURGAS_PURCHASE_SEARCH_FILTERS = new ArrayList<>();
-    public static final List<SearchFilter> BURGAS_RENT_SEARCH_FILTERS = new ArrayList<>();
+    public static final List<ScrapeSearchFilter> BURGAS_PURCHASE_SEARCH_FILTERS = new ArrayList<>();
+    public static final List<ScrapeSearchFilter> BURGAS_RENT_SEARCH_FILTERS = new ArrayList<>();
 
     private ImotBGUtils() {
         throw new AssertionError("Cannot instantiate " + this.getClass().getName());
@@ -112,18 +112,18 @@ public final class ImotBGUtils {
     static {
         for (var location : Location.values()) {
             for (var accommodationType : AccommodationType.values()) {
-                ALL_RENT_SEARCH_FILTERS.add(new SearchFilter(location, accommodationType));
+                ALL_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(location, accommodationType));
                 if (accommodationType != AccommodationType.ROOM) {
-                    ALL_PURCHASE_SEARCH_FILTERS.add(new SearchFilter(location, accommodationType));
+                    ALL_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(location, accommodationType));
                 }
             }
         }
 
 
-        BURGAS_RENT_SEARCH_FILTERS.add(new SearchFilter(Location.BURGAS, AccommodationType.ONE_ROOM));
+        BURGAS_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.ONE_ROOM));
 
 
-        BURGAS_PURCHASE_SEARCH_FILTERS.add(new SearchFilter(Location.BURGAS, AccommodationType.ONE_ROOM));
+        BURGAS_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.ONE_ROOM));
 
 
 
