@@ -9,13 +9,16 @@ import io.milvus.param.collection.*;
 import io.milvus.param.control.ManualCompactParam;
 import io.milvus.param.dml.DeleteParam;
 import io.milvus.param.dml.InsertParam;
+import io.milvus.param.dml.QueryParam;
 import io.milvus.param.dml.SearchParam;
 import io.milvus.param.index.CreateIndexParam;
 import io.milvus.param.partition.CreatePartitionParam;
+import io.milvus.param.partition.DropPartitionParam;
 import io.milvus.param.partition.HasPartitionParam;
+import io.milvus.param.partition.ReleasePartitionsParam;
+import io.milvus.response.QueryResultsWrapper;
 import io.milvus.response.SearchResultsWrapper;
 import org.springframework.stereotype.Repository;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -44,6 +47,24 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
         this.milvusClient = serviceClient;
     }
 
+    public void query() {
+        List<String> fields = Arrays.asList(ID_FIELD, TOWN_FIELD, NEIGHBOURHOOD_FIELD, PRICE_FIELD, ACCOMMODATION_TYPE_FIELD);
+        QueryParam test = QueryParam.newBuilder()
+            .withCollectionName(COLLECTION_NAME)
+            .withOutFields(fields)
+            .withExpr(PRICE_FIELD + "> 50")
+            .build();
+        R<QueryResults> response = milvusClient.query(test);
+        handleResponseStatus(response);
+        QueryResultsWrapper wrapper = new QueryResultsWrapper(response.getData());
+        System.out.println(ID_FIELD + ":" + wrapper.getFieldWrapper(ID_FIELD).getFieldData().toString());
+        System.out.println(TOWN_FIELD + ":" + wrapper.getFieldWrapper(TOWN_FIELD).getFieldData().toString());
+        System.out.println(NEIGHBOURHOOD_FIELD + ":" + wrapper.getFieldWrapper(NEIGHBOURHOOD_FIELD).getFieldData().toString());
+        System.out.println(PRICE_FIELD + ":" + wrapper.getFieldWrapper(PRICE_FIELD).getFieldData().toString());
+        System.out.println(ACCOMMODATION_TYPE_FIELD + ":" + wrapper.getFieldWrapper(ACCOMMODATION_TYPE_FIELD).getFieldData().toString());
+        System.out.println("Query row count: " + wrapper.getFieldWrapper(ID_FIELD).getRowCount());
+    }
+
     public void setUp() {
         if (!hasCollection()) {
             createCollection(TIMEOUT);
@@ -56,6 +77,8 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
         if (!hasPartition(SALE_PARTITION)) {
             createPartition(SALE_PARTITION);
         }
+
+        loadCollection();
     }
 
     public void createCollection(long timeout) {
@@ -154,9 +177,17 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
     }
 
     public void deleteAds(String partitionName, List<Long> adIds) {
-        String expr = adIds.stream()
-            .map(adId -> ID_FIELD + "==" + adId)
-            .collect(Collectors.joining("||"));
+
+        if (adIds.isEmpty()) {
+            System.out.println("return with empty list from deleteAds");
+            return;
+        }
+        String expr = ID_FIELD + " in [" +
+            adIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(", ")) +
+            "]";
+        System.out.println(expr);
 
         DeleteParam deleteParam = DeleteParam.newBuilder()
             .withCollectionName(COLLECTION_NAME)
@@ -166,12 +197,28 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
 
         R<MutationResult> response = milvusClient.delete(deleteParam);
         handleResponseStatus(response);
+
+    }
+
+    private void deleteAllRecordsInPartition(String partitionName) {
+        releaseCollection();
+        dropPartition(partitionName);
+        compact();
+        createPartition(partitionName);
+        loadCollection();
     }
 
     public void deleteAdsNotInIds(String partitionName, List<Long> adIds) {
-        String expr = adIds.stream()
-            .map(adId -> ID_FIELD + "!=" + adId)
-            .collect(Collectors.joining("&&"));
+        System.out.println("begin delete ads not in milvus");
+        if (adIds.isEmpty()) {
+            deleteAllRecordsInPartition(partitionName);
+            return;
+        }
+
+
+        String expr = "not " + ID_FIELD + " in [" + adIds.stream().map(Object::toString).collect(Collectors.joining(", ")) + "]";
+
+
 
         DeleteParam deleteParam = DeleteParam.newBuilder()
             .withCollectionName(COLLECTION_NAME)
@@ -181,9 +228,14 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
 
         R<MutationResult> response = milvusClient.delete(deleteParam);
         handleResponseStatus(response);
+        System.out.println("return from delete ads not in milvus");
     }
 
     public void createAds(String partitionName, List<List<Float>> embeddings, List<Ad> ads) {
+        if (ads.isEmpty()) {
+            return;
+        }
+
         List<InsertParam.Field> fields = new ArrayList<>();
         List<Integer> prices = new LinkedList<>();
         List<String> towns = new LinkedList<>();
@@ -215,6 +267,9 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
 
         R<MutationResult> response = milvusClient.insert(insertParam);
         handleResponseStatus(response);
+        System.out.println("created in milvus?");
+        query();
+        System.out.println("after query");
     }
 
     @Override
@@ -255,6 +310,14 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
         return response.getData().booleanValue();
     }
 
+    private void dropPartition(String partitionName) {
+        R<RpcStatus> response = milvusClient.dropPartition(DropPartitionParam.newBuilder()
+            .withCollectionName(COLLECTION_NAME)
+            .withPartitionName(partitionName)
+            .build());
+        handleResponseStatus(response);
+    }
+
     private boolean hasCollection() {
         R<Boolean> response = milvusClient.hasCollection(HasCollectionParam.newBuilder()
                 .withCollectionName(COLLECTION_NAME)
@@ -269,4 +332,22 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
             throw new RuntimeException(r.getMessage());
         }
     }
+
+    private R<RpcStatus> releasePartition(String partitionName) {
+        R<RpcStatus> response = milvusClient.releasePartitions(ReleasePartitionsParam.newBuilder()
+            .withCollectionName(COLLECTION_NAME)
+            .addPartitionName(partitionName)
+            .build());
+        handleResponseStatus(response);
+        System.out.println(response);
+        return response;
+    }
+
+    public void dropCollection() {
+        R<RpcStatus> response = milvusClient.dropCollection(DropCollectionParam.newBuilder()
+            .withCollectionName(COLLECTION_NAME)
+            .build());
+        handleResponseStatus(response);
+    }
+
 }

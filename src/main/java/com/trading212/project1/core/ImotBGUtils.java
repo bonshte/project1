@@ -120,10 +120,10 @@ public final class ImotBGUtils {
         }
 
 
-        BURGAS_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.ONE_ROOM));
+        BURGAS_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.TWO_ROOM));
 
 
-        BURGAS_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.ONE_ROOM));
+        BURGAS_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.TWO_ROOM));
 
 
 

@@ -8,9 +8,8 @@ import com.trading212.project1.core.models.scraping.Currency;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,7 +49,7 @@ public class ImotBGAdMapper {
         }
         extractPrice(scrapedAd, priceElement);
 
-        List<String> imageUrls = new ArrayList<>();
+        Set<String> imageUrls = new HashSet<>();
         Element mainPictureElement = document.selectFirst(SelectorPath.MAIN_PICTURE_SELECTOR);
         if (mainPictureElement != null) {
             String mainPictureSrc = mainPictureElement.attr("src");
@@ -69,9 +68,9 @@ public class ImotBGAdMapper {
                 }
             }
         }
-        if (!imageUrls.isEmpty()) {
-            scrapedAd.setImageUrls(imageUrls);
-        }
+
+        scrapedAd.setImageUrls(imageUrls.stream().toList());
+
 
         Element adParamElement = document.selectFirst(SelectorPath.AD_PARAM_SELECTOR);
         if (adParamElement != null) {
@@ -83,6 +82,7 @@ public class ImotBGAdMapper {
             extractDescription(scrapedAd, descriptionElement);
         }
 
+        scrapedAd.setFeatures(new ArrayList<>());
         Element featuresHeadingElement = document.selectFirst(SelectorPath.FEATURES_HEADING_SELECTOR);
         //for the features element to be present on the DOM there should be an element Особености
         if (featuresHeadingElement != null && featuresHeadingElement.text().startsWith("Особености")) {
@@ -106,7 +106,7 @@ public class ImotBGAdMapper {
             extractProvider(scrapedAd, propertyProviderElement);
         }
 
-        System.out.println(scrapedAd);
+
         return scrapedAd;
     }
 
@@ -115,7 +115,6 @@ public class ImotBGAdMapper {
 
         if (matcher.find()) {
             String websiteId = matcher.group(1);
-            System.out.println(IMOTBG_BASE_URL + websiteId);
             scrapedAd.setLink(IMOTBG_BASE_URL + websiteId);
         } else {
             throw new ScrapeFormatMissMatchException("miss match with url ID");

@@ -36,11 +36,5 @@ public class Ad {
     private String description;
     private List<String> imageUrls;
 
-    public Double calculateInBGN() {
-        double bgnPrice = getPrice();
-        if (currency != null) {
-            bgnPrice = bgnPrice * Currency.TO_BGN.get(currency);
-        }
-        return bgnPrice;
-    }
+
 }

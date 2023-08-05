@@ -24,7 +24,7 @@ public interface AdRepository {
 
     void deleteAdById(Long adId);
 
-    List<Long> getAdIdsWithLinksIn(List<String> links);
+    List<AdEntity> getAllAdsByOffer(boolean forSale);
 
-    int deleteAdsNotIn(List<Long> adIds);
+    List<AdEntity> getAllAds();
 }

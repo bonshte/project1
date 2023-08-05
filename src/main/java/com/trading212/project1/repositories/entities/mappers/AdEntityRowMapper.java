@@ -27,13 +27,13 @@ public class AdEntityRowMapper implements RowMapper<AdEntity> {
         ad.setCurrency(Currency.valueOf(rs.getString("currency").toUpperCase()));
 
         ad.setPropertyProvider(rs.getString("property_provider"));
-        ad.setSize(rs.getInt("size"));
-        ad.setFloor(rs.getInt("floor"));
-        ad.setTotalFloors(rs.getInt("total_floors"));
+        ad.setSize((Integer) rs.getObject("size"));
+        ad.setFloor((Integer) rs.getObject("floor"));
+        ad.setTotalFloors((Integer) rs.getObject("total_floors"));
         ad.setGasProvided(rs.getBoolean("gas_provided"));
         ad.setThermalPowerPlantProvided(rs.getBoolean("thermal_power_plant_provided"));
         ad.setPhoneNumber(rs.getString("phone_number"));
-        ad.setYearBuilt(rs.getInt("year_built"));
+        ad.setYearBuilt((Integer) rs.getObject("year_built"));
         ad.setLink(rs.getString("link"));
         ad.setConstruction(rs.getString("construction"));
         ad.setDescription(rs.getString("description"));

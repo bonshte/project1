@@ -1,13 +1,10 @@
 package com.trading212.project1.core;
 
-import com.beust.jcommander.Strings;
 import com.trading212.project1.core.mappers.ImotBGAdMapper;
 import com.trading212.project1.core.models.Ad;
 import com.trading212.project1.core.models.scraping.ScrapedAd;
 import com.trading212.project1.core.models.scraping.ScrapeConfig;
 import com.trading212.project1.core.models.scraping.ScrapingResult;
-import com.trading212.project1.repositories.AdRepository;
-import com.trading212.project1.repositories.mariadb.MariaDBAdRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +16,7 @@ public class ScrapeCron {
     private final ImotBGScrapingService scrapingService;
     private final DeepLTranslationService translationService;
     private final AdaEmbeddingService embeddingService;
-    private final AdService adService
+    private final AdService adService;
     private final GPTService gptService;
 
 
@@ -47,134 +44,191 @@ public class ScrapeCron {
 
 
 
-    @Transactional
-    @Scheduled(cron = "0 01 * * * *")
-    public void scrapeImotBG() {
-        ScrapingResult rentScrapeResult = scrapingService.scrape(BURGAS_RENT_SCRAPE_CONFIG);
-        List<ScrapedAd> scrapedApartmentsForRent = rentScrapeResult.getScrapedAds();
-        List<String> adLinks = scrapedApartmentsForRent.stream().map(ScrapedAd::getLink).toList();
 
-        List<Ad> persistentAds = adService.getAdsWithLinksFrom(adLinks);
-
-        // Create Maps
-        Map<String, Ad> adMap = new HashMap<>();
-        Map<String, ScrapedAd> scrapedAdMap = new HashMap<>();
-
-// Populate Maps
-        for (Ad ad : persistentAds) {
-            adMap.put(ad.getLink(), ad);
-        }
-
-        for (ScrapedAd scrapedAd : scrapedApartmentsForRent) {
-            scrapedAdMap.put(scrapedAd.getLink(), scrapedAd);
-        }
-
-// Create Lists for Ads and ScrapedAds that meet the criteria
-        List<Ad> adsThatDoNotCompare = new ArrayList<>();
-        List<ScrapedAd> scrapedAdsThatCompare = new ArrayList<>();
-
-// Iterate over Maps and compare Ads
-        for (String link : adMap.keySet()) {
-            if (scrapedAdMap.containsKey(link)) {
-                if (!isSameProperty(adMap.get(link), scrapedAdMap.get(link))) {
-                    adsThatDoNotCompare.add(adMap.get(link));
-                }
-            }
-        }
-
-// Iterate over Maps and compare ScrapedAds
-        for (String link : scrapedAdMap.keySet()) {
-            if (adMap.containsKey(link)) {
-                if (compare(adMap.get(link), scrapedAdMap.get(link))) {
-                    scrapedAdsThatCompare.add(scrapedAdMap.get(link));
-                }
-            }
-        }
-
-
-
-//        ScrapingResult rentScrapeResult = scrapingService.scrape(BURGAS_RENT_SCRAPE_CONFIG);
-//        List<ScrapedAd> apartmentsForRent = rentScrapeResult.getScrapedAds();
-//        for (var apartment : apartmentsForRent) {
-//            System.out.println(apartment);
-//        }
-//
-//        apartmentsForRent = apartmentsForRent.stream().limit(3).toList();
-//
-//        List<ScrapedAd> translatedApartments = apartmentsForRent.stream()
-//                .map(this::translateAd)
-//                .toList();
-//
-//        for (var translatedApartment : translatedApartments) {
-//            System.out.println("old description:" + translatedApartment.getDescription());
-//            GPTService.GPTMessageDTO messageDTO = gptService.summarizeDescription(translatedApartment.getDescription());
-//            translatedApartment.setDescription(messageDTO.getContent());
-//        }
-//
-//        List<String> apartmentDescriptionsForEmbedding = translatedApartments.stream()
-//                .map(this::toEmbeddableText)
-//                .toList();
-//
-//
-//
-//        List<List<Float>> embeddings = apartmentDescriptionsForEmbedding.stream()
-//                .map(embeddingService::embedWithAda)
-//                .toList();
-//
-//        for (int i = 0; i < 3 && i < apartmentsForRent.size(); ++i) {
-//            System.out.println(translatedApartments.get(i));
-//            System.out.println(apartmentDescriptionsForEmbedding.get(i));
-//        }
-
+    @Scheduled(cron = "0 59 * * * *")
+    public void scrape() {
+        renewApartmentData(BURGAS_PURCHASE_SCRAPE_CONFIG, true);
+//        renewApartmentData(BURGAS_PURCHASE_SCRAPE_CONFIG, true);
     }
 
 
-//    private String toEmbeddableText(ScrapedAd scrapedAd) {
-//        return "Apartment in" +
-//                (scrapedAd.getDistrict() != null ? scrapedAd.getDistrict() : "") +
-//                (scrapedAd.getTown() != null ? " " + scrapedAd.getTown() + "," : "") +
-//                (scrapedAd.getNeighbourhood() != null ? " neighbourhood " + scrapedAd.getNeighbourhood() + "," : "") +
-//                (scrapedAd.getAccommodationType() != null ? " apartment type " + scrapedAd.getAccommodationType().toDescriptionString() + "," : "") +
-//                (scrapedAd.getPrice() != null ? " price " + scrapedAd.calculateInBGN().intValue() + "," : "") +
-//                (scrapedAd.getPropertyProvider() != null ? " " + scrapedAd.getPropertyProvider() + "," : "") +
-//                (scrapedAd.getSize() != null ? " square meters " + scrapedAd.getSize() + "," : "") +
-//                (scrapedAd.isGasProvided() ? " has gas heating," : "") +
-//                (scrapedAd.isThermalPowerPlantProvided() ? " has thermal power plant heating," : "") +
-//                (scrapedAd.getFeatures() != null ? " features " + Strings.join( " ", scrapedAd.getFeatures()) + "," : "") +
-//                (scrapedAd.getDescription() != null ? " " + scrapedAd.getDescription() : "");
-//
-//    }
 
-//    private ScrapedAd translateAd(ScrapedAd scrapedAd) {
-//        return new ScrapedAd(
-//                scrapedAd.getId(),
-//                translationService.translateToEnglish(scrapedAd.getTown()),
-//                scrapedAd.getNeighbourhood() != null ?
-//                        translationService.translateToEnglish(scrapedAd.getNeighbourhood()) : null,
-//                scrapedAd.getDistrict() != null ?
-//                        translationService.translateToEnglish(scrapedAd.getDistrict()) : null,
-//                scrapedAd.getAccommodationType(),
-//                scrapedAd.getPrice(),
-//                scrapedAd.getCurrency(),
-//                scrapedAd.getPropertyProvider()  != null ?
-//                        translationService.translateToEnglish(scrapedAd.getPropertyProvider()) : null,
-//                scrapedAd.getSize(),
-//                scrapedAd.getFloor(),
-//                scrapedAd.getTotalFloors(),
-//                scrapedAd.isGasProvided(),
-//                scrapedAd.isThermalPowerPlantProvided(),
-//                scrapedAd.getFeatures() != null ?
-//                        translationService.translateToEnglish(scrapedAd.getFeatures()) : scrapedAd.getFeatures(),
-//                scrapedAd.getPhoneNumber(),
-//                scrapedAd.getYearBuilt(),
-//                scrapedAd.getLink(),
-//                scrapedAd.getConstruction() != null ?
-//                        translationService.translateToEnglish(scrapedAd.getConstruction()) : null,
-//                scrapedAd.getDescription() != null ?
-//                        translationService.translateToEnglish(scrapedAd.getDescription()) : null,
-//                scrapedAd.getImageUrls()
+    private  List<Float> generateFloats() {
+        long seed = System.currentTimeMillis();
+        Random rand = new Random(seed);
+        List<Float> floats = new ArrayList<>();
+
+        for (int i = 0; i < 1536; i++) {
+            floats.add(rand.nextFloat());
+        }
+
+        return floats;
+    }
+
+
+
+
+
+
+    @Transactional
+    private void renewApartmentData(ScrapeConfig scrapeConfig, boolean forSale) {
+        ScrapingResult rentScrapeResult = scrapingService.scrape(scrapeConfig);
+        List<ScrapedAd> scrapedApartments = rentScrapeResult.getScrapedAds();
+
+        List<Ad> savedAds = adService.getAllAdsByOffer(forSale);
+        List<Ad> activeAds = getActiveAds(savedAds, scrapedApartments);
+        List<Ad> inactiveAds = getInactiveAds(savedAds, scrapedApartments);
+        System.out.println("active ads");
+        printList(activeAds);
+        System.out.println("inactive ads");
+        printList(inactiveAds);
+
+        List<Ad> activeButEdited = getActiveButEdited(activeAds, scrapedApartments, forSale);
+        System.out.println("active but edited");
+        printList(activeButEdited);
+
+        List<Ad> adsToDelete = new ArrayList<>();
+        adsToDelete.addAll(inactiveAds);
+        adsToDelete.addAll(activeButEdited);
+        adService.deleteAdsIn(adsToDelete.stream().map(Ad::getAdId).toList(), forSale);
+
+
+        List<Ad> activeNotEdited = getActiveNotEdited(activeAds, activeButEdited);
+        System.out.println("active but not edited");
+        printList(activeNotEdited);
+        List<ScrapedAd> scrapedAdsToSave = getBrandNewAdScrapes(scrapedApartments, activeNotEdited);
+
+
+
+
+        List<List<Float>> embeddings = new ArrayList<>();
+        for (int i = 0 ; i < scrapedAdsToSave.size(); ++i) {
+            embeddings.add(generateFloats());
+        }
+        System.out.println("before creation");
+        adService.createAds(scrapedAdsToSave, embeddings, forSale);
+        System.out.println("after creation");
+//        List<ScrapedAd> englishTranslatedScrapedAds = scrapedApartmentsToSave
+//            .stream()
+//            .map(this::translateAd)
+//            .toList();
+
+
+//        for (var translatedAd : englishTranslatedScrapedAds) {
+//            GPTService.GPTMessageDTO messageDTO = gptService.summarizeDescription(translatedAd.getDescription());
+//            translatedAd.setDescription(messageDTO.getContent());
+//        }
+//        List<String> apartmentDescriptionsForEmbedding = englishTranslatedScrapedAds
+//            .stream()
+//            .map(ScrapedAd::toEmbeddableText)
+//            .toList();
+//
+//
+//        List<List<Float>> embeddings = apartmentDescriptionsForEmbedding
+//            .stream()
+//            .map(embeddingService::embedWithAda)
+//            .toList();
+//
+//        adService.createAds(
+//            newAds,
+//            embeddings,
+//            forSale
 //        );
-//    }
+//
+//        adService.saveAdsChanges();
+    }
+
+
+
+    private List<Ad> getActiveNotEdited(List<Ad> activeAds, List<Ad> editedAds) {
+        List<Long> editedAdsId = editedAds.stream().map(Ad::getAdId).toList();
+        return activeAds.stream()
+            .filter(ad -> !editedAdsId.contains(ad.getAdId()))
+            .toList();
+    }
+
+    private List<ScrapedAd> getBrandNewAdScrapes(List<ScrapedAd> scrapedAds, List<Ad> scrapedNotEdited) {
+        List<String> scrapedNotEditedLinks = scrapedNotEdited.stream().map(Ad::getLink).toList();
+        return scrapedAds.stream()
+            .filter(scrapedAd -> !scrapedNotEditedLinks.contains(scrapedAd.getLink()))
+            .toList();
+    }
+
+
+    private void printList(List<Ad> ads) {
+        for (var ad : ads) {
+            System.out.println(ad);
+        }
+    }
+
+    private List<Ad> getActiveAds(List<Ad> ads, List<ScrapedAd> scrapedAds) {
+        List<String> scrapedLinks = scrapedAds.stream().map(ScrapedAd::getLink).toList();
+        return ads.stream()
+            .filter(ad -> scrapedLinks.contains(ad.getLink()))
+            .toList();
+    }
+
+    private List<Ad> getInactiveAds(List<Ad> ads, List<ScrapedAd> scrapedAds) {
+        List<String> scrapedLinks = scrapedAds.stream().map(ScrapedAd::getLink).toList();
+        return ads.stream()
+            .filter(ad -> !scrapedLinks.contains(ad.getLink()))
+            .toList();
+    }
+
+    //might be buggy
+    private ScrapedAd translateAd(ScrapedAd scrapedAd) {
+        return new ScrapedAd(
+            translationService.translateToEnglish(scrapedAd.getTown()),
+            scrapedAd.getNeighbourhood() != null ?
+                translationService.translateToEnglish(scrapedAd.getNeighbourhood()) : null,
+            scrapedAd.getDistrict() != null ?
+                translationService.translateToEnglish(scrapedAd.getDistrict()) : null,
+            scrapedAd.getAccommodationType(),
+            scrapedAd.getPrice(),
+            scrapedAd.getCurrency(),
+            scrapedAd.getPropertyProvider()  != null ?
+                translationService.translateToEnglish(scrapedAd.getPropertyProvider()) : null,
+            scrapedAd.getSize(),
+            scrapedAd.getFloor(),
+            scrapedAd.getTotalFloors(),
+            scrapedAd.isGasProvided(),
+            scrapedAd.isThermalPowerPlantProvided(),
+            scrapedAd.getPhoneNumber(),
+            scrapedAd.getYearBuilt(),
+            scrapedAd.getLink(),
+            scrapedAd.getConstruction() != null ?
+                translationService.translateToEnglish(scrapedAd.getConstruction()) : null,
+            scrapedAd.getDescription() != null ?
+                translationService.translateToEnglish(scrapedAd.getDescription()) : null,
+            scrapedAd.getFeatures() != null ?
+                translationService.translateToEnglish(scrapedAd.getFeatures()) : scrapedAd.getFeatures(),
+            scrapedAd.getImageUrls()
+        );
+    }
+
+    private List<Ad> getActiveButEdited(List<Ad> activeAds, List<ScrapedAd> scrapedAds, boolean forSale) {
+        Map<String, Ad> persistedLinkToAds = new HashMap<>();
+        Map<String, ScrapedAd> linkToScrapedAd = new HashMap<>();
+        for (var ad : activeAds) {
+            persistedLinkToAds.put(ad.getLink(), ad);
+        }
+
+        for (var scrapedAd : scrapedAds) {
+            linkToScrapedAd.put(scrapedAd.getLink(), scrapedAd);
+        }
+
+        List<Ad> editedAds = new ArrayList<>();
+        for (var persistedLinkToAd : persistedLinkToAds.entrySet()) {
+            if (linkToScrapedAd.containsKey(persistedLinkToAd.getKey())) {
+                ScrapedAd newAd = linkToScrapedAd.get(persistedLinkToAd.getKey());
+                if (!isSameProperty(newAd, persistedLinkToAd.getValue(), forSale)) {
+
+                    editedAds.add(persistedLinkToAd.getValue());
+                }
+            }
+        }
+        return editedAds;
+    }
 
     private boolean isSameProperty(ScrapedAd scrapedAd, Ad savedAd, boolean forSale) {
         if (!Objects.equals(savedAd.getTown(), scrapedAd.getTown())) return false;

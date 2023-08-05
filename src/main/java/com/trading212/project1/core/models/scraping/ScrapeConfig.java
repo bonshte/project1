@@ -19,4 +19,5 @@ public class ScrapeConfig {
     private Function<AccommodationType, String> accommodationTypeCodeGenerator;
     private BiFunction<Document, String, ScrapedAd> adExtractor;
     private List<ScrapeSearchFilter> filters;
+
 }

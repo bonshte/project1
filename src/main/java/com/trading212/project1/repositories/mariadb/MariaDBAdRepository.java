@@ -12,8 +12,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Collections;
+import java.sql.Types;
 import java.util.List;
 
 @Repository
@@ -41,24 +42,26 @@ public class MariaDBAdRepository implements AdRepository {
 
             jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(Queries.CREATE_AD, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, town);
-                ps.setString(2, neighbourhood);
-                ps.setString(3, district);
-                ps.setString(4, accommodationType.toString());
-                ps.setInt(5, price);
-                ps.setString(6, currency.toString());
-                ps.setString(7, propertyProvider);
-                ps.setInt(8, size);
-                ps.setInt(9, floor);
-                ps.setInt(10, totalFloors);
-                ps.setBoolean(11, gasProvided);
-                ps.setBoolean(12, thermalPowerPlantProvided);
-                ps.setString(13, phoneNumber);
-                ps.setInt(14, yearBuilt);
-                ps.setString(15, link);
-                ps.setString(16, construction);
-                ps.setString(17, description);
-                ps.setBoolean(18, forSale);
+
+                setStringOrNull(ps, 1, town);
+                setStringOrNull(ps, 2, neighbourhood);
+                setStringOrNull(ps, 3, district);
+                setStringOrNull(ps, 4, accommodationType != null ? accommodationType.toString() : null);
+                setIntegerOrNull(ps, 5, price);
+                setStringOrNull(ps, 6, currency != null ? currency.toString() : null);
+                setStringOrNull(ps, 7, propertyProvider);
+                setIntegerOrNull(ps, 8, size);
+                setIntegerOrNull(ps, 9, floor);
+                setIntegerOrNull(ps, 10, totalFloors);
+                setBooleanOrNull(ps, 11, gasProvided);
+                setBooleanOrNull(ps, 12, thermalPowerPlantProvided);
+                setStringOrNull(ps, 13, phoneNumber);
+                setIntegerOrNull(ps, 14, yearBuilt);
+                setStringOrNull(ps, 15, link);
+                setStringOrNull(ps, 16, construction);
+                setStringOrNull(ps, 17, description);
+                setBooleanOrNull(ps, 18, forSale);
+
                 return ps;
             }, keyHolder);
 
@@ -67,6 +70,7 @@ public class MariaDBAdRepository implements AdRepository {
 
 
             for (String feature : features) {
+
                 jdbcTemplate.update(Queries.CREATE_FEATURE_FOR_AD, adId, feature);
             }
 
@@ -105,40 +109,74 @@ public class MariaDBAdRepository implements AdRepository {
         return jdbcTemplate.queryForObject(Queries.GET_AD_BY_ID, new Object[]{adId}, new AdEntityRowMapper());
     }
 
-    public void test() {
-        var ads = deleteAdsNotIn(List.of(Long.valueOf(4), Long.valueOf(8)));
-        System.out.println(ads);
-    }
-
 
     @Override
     public void deleteAdById(Long adId) {
         jdbcTemplate.update(Queries.DELETE_AD_BY_ID, adId);
     }
 
-
     @Override
-    public List<Long> getAdIdsWithLinksIn(List<String> links) {
-
-        String inClause = String.join(",", Collections.nCopies(links.size(), "?"));
-        String query = "SELECT ad_id FROM ads WHERE link IN (" + inClause + ")";
-
-        return jdbcTemplate.query(query, links.toArray(), (rs, rowNum) -> rs.getLong("ad_id"));
+    public List<AdEntity> getAllAdsByOffer(boolean forSale) {
+        return jdbcTemplate.query(Queries.GET_ALL_ADS_BY_OFFER, new Object[]{forSale}, new AdEntityRowMapper());
     }
 
-    @Override
-    public int deleteAdsNotIn(List<Long> adIds) {
+    private void setStringOrNull(PreparedStatement ps, int parameterIndex, String value) throws SQLException {
+        if (value == null) {
+            ps.setNull(parameterIndex, Types.VARCHAR);
+        } else {
+            ps.setString(parameterIndex, value);
+        }
+    }
 
-        String inClause = String.join(",", Collections.nCopies(adIds.size(), "?"));
-        String query = "DELETE FROM ads WHERE ad_id NOT IN (" + inClause + ")";
+    private void setIntegerOrNull(PreparedStatement ps, int parameterIndex, Integer value) throws SQLException {
+        if (value == null) {
+            ps.setNull(parameterIndex, Types.INTEGER);
+        } else {
+            ps.setInt(parameterIndex, value);
+        }
+    }
 
-        return jdbcTemplate.update(query, adIds.toArray());
+    private void setBooleanOrNull(PreparedStatement ps, int parameterIndex, Boolean value) throws SQLException {
+        if (value == null) {
+            ps.setNull(parameterIndex, Types.BOOLEAN);
+        } else {
+            ps.setBoolean(parameterIndex, value);
+        }
     }
 
 
+
+    @Override
+    public List<AdEntity> getAllAds() {
+        return jdbcTemplate.query(Queries.GET_ALL_ADS, new AdEntityRowMapper());
+    }
 
 
     static class Queries {
+        private static final String GET_ALL_ADS_BY_OFFER = "SELECT ads.ad_id, ads.for_sale, ads.town, ads.neighbourhood, ads.district, ads.accommodation_type, ads.price, " +
+            "ads.currency, ads.property_provider, ads.size, ads.floor, ads.total_floors, ads.gas_provided, " +
+            "ads.thermal_power_plant_provided, ads.phone_number, ads.year_built, ads.link, ads.construction, " +
+            "ads.description, GROUP_CONCAT(DISTINCT adFeature.feature) as features, " +
+            "GROUP_CONCAT(DISTINCT adImageUrl.image_url) as imageUrls " +
+            "FROM ads " +
+            "LEFT JOIN adFeature ON ads.ad_id = adFeature.ad_id " +
+            "LEFT JOIN adImageUrl ON ads.ad_id = adImageUrl.ad_id " +
+            "WHERE ads.for_sale = ? " +
+            "GROUP BY ads.ad_id, ads.for_sale, ads.town, ads.neighbourhood, ads.district, ads.accommodation_type, ads.price, " +
+            "ads.currency, ads.property_provider, ads.size, ads.floor, ads.total_floors, ads.gas_provided, " +
+            "ads.thermal_power_plant_provided, ads.phone_number, ads.year_built, ads.link, ads.construction, ads.description";
+
+        private static final String GET_ALL_ADS = "SELECT ads.ad_id, ads.for_sale, ads.town, ads.neighbourhood, ads.district, ads.accommodation_type, ads.price, " +
+            "ads.currency, ads.property_provider, ads.size, ads.floor, ads.total_floors, ads.gas_provided, " +
+            "ads.thermal_power_plant_provided, ads.phone_number, ads.year_built, ads.link, ads.construction, " +
+            "ads.description, GROUP_CONCAT(DISTINCT adFeature.feature) as features, " +
+            "GROUP_CONCAT(DISTINCT adImageUrl.image_url) as imageUrls " +
+            "FROM ads " +
+            "LEFT JOIN adFeature ON ads.ad_id = adFeature.ad_id " +
+            "LEFT JOIN adImageUrl ON ads.ad_id = adImageUrl.ad_id " +
+            "GROUP BY ads.ad_id, ads.for_sale, ads.town, ads.neighbourhood, ads.district, ads.accommodation_type, ads.price, " +
+            "ads.currency, ads.property_provider, ads.size, ads.floor, ads.total_floors, ads.gas_provided, " +
+            "ads.thermal_power_plant_provided, ads.phone_number, ads.year_built, ads.link, ads.construction, ads.description";
         private static final String GET_AD_BY_ID =  "SELECT ads.ad_id, ads.for_sale, ads.town, ads.neighbourhood, ads.district, ads.accommodation_type, ads.price, " +
             "ads.currency, ads.property_provider, ads.size, ads.floor, ads.total_floors, ads.gas_provided, " +
             "ads.thermal_power_plant_provided, ads.phone_number, ads.year_built, ads.link, ads.construction, " +
@@ -161,5 +199,7 @@ public class MariaDBAdRepository implements AdRepository {
 
         private static final String CREATE_IMAGE_FOR_AD = "INSERT INTO adImageUrl (ad_id, image_url) VALUES (?, ?)";
         private static final String CREATE_FEATURE_FOR_AD = "INSERT INTO adFeature (ad_id, feature) VALUES (?, ?)";
+
+        private static final String DELETE_ALL_AD_RECORDS = "DELETE FROM ads";
     }
 }

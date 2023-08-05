@@ -1,3 +1,4 @@
+ALTER DATABASE accommodation COLLATE utf8mb4_bin;
 CREATE TABLE user (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -55,10 +56,13 @@ CREATE TABLE adFeature (
 
 CREATE TABLE adImageUrl (
     ad_id BIGINT,
-    image_url VARCHAR(255),
+    image_url TEXT,
     PRIMARY KEY (ad_id, image_url),
     FOREIGN KEY (ad_id) REFERENCES ads(ad_id) ON DELETE CASCADE
 );
+
+ALTER TABLE adImageUrl CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
 
 
 CREATE TABLE chatSessionRecommendation (
