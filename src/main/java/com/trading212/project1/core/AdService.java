@@ -35,7 +35,8 @@ public class AdService {
 
 
     @Transactional
-    public void createAds(List<ScrapedAd> scrapedAds, List<List<Float>> embeddings, boolean forSale) {
+    public void createAds(List<ScrapedAd> scrapedAds, List<List<Float>> embeddings,
+                          List<ScrapedAd> translatedScrapedAds, boolean forSale) {
         if (scrapedAds.size() != embeddings.size()) {
             throw new RuntimeException("miss in scrapedAds and embeddings");
         }
@@ -64,17 +65,17 @@ public class AdService {
                 scrapedAd.getImageUrls()
             );
             savedAds.add(Mappers.fromAdEntity(savedAdEntity));
-
         }
-        System.out.println("saved to rdbms");
 
         if (savedAds.size() != scrapedAds.size()) {
             throw new RuntimeException("could not save all apartments");
         }
+
+        List<Ad> translatedAds = Mappers.generateTranslatedAds(savedAds, translatedScrapedAds);
         embeddingRepository.createAds(
             forSale ? MilvusAdsRepository.SALE_PARTITION : MilvusAdsRepository.RENT_PARTITION,
             embeddings,
-            savedAds
+            translatedAds
         );
     }
 
@@ -101,7 +102,8 @@ public class AdService {
 
 
 
-    public List<Ad> findClosestAds(List<Float> embedding, String partitionName, int topK, SimilaritySearchFilter searchFilter) {
+    public List<Ad> findClosestAds(List<Float> embedding, String partitionName,
+                                   int topK, SimilaritySearchFilter searchFilter) {
         List<Long> recommendedAdIds = embeddingRepository.similaritySearchForAds(embedding,
             searchFilter.toFilterExpression(), partitionName, topK);
 
@@ -122,4 +124,6 @@ public class AdService {
         AdEntity adEntity = adRepository.getByAdId(adId);
         return Mappers.fromAdEntity(adEntity);
     }
+
+
 }

@@ -21,7 +21,7 @@ public class DeepLTranslationService {
     private static final String API_KEY = "5a53ed53-d5d3-5298-a1c3-39db9275eaa6:fx";
 
     private static final String ENG_LANG_CODE = "EN";
-    private static final String BG_LANG_CIDE = "BG";
+    private static final String BG_LANG_CODE = "BG";
     private static final int OK_CODE_RANGE_START = 200;
     private static final int OK_CODE_RANGE_END = 299;
 

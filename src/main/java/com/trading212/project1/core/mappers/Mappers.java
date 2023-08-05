@@ -8,6 +8,7 @@ import com.trading212.project1.core.models.scraping.ScrapedAd;
 import com.trading212.project1.repositories.entities.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Mappers {
@@ -65,6 +66,43 @@ public class Mappers {
         ad.setImageUrls(adEntity.getImageUrls());
         return ad;
     }
+
+    public static List<Ad> generateTranslatedAds(List<Ad> ads, List<ScrapedAd> translatedVersions) {
+
+        Map<String, Ad> adMap = ads.stream().collect(Collectors.toMap(Ad::getLink, ad -> ad));
+
+        List<Ad> combinedList = translatedVersions.stream().map(translatedAd -> {
+
+            Ad matchingAd = adMap.get(translatedAd.getLink());
+
+            return Ad.builder()
+                .adId(matchingAd.getAdId())
+                .town(translatedAd.getTown())
+                .neighbourhood(translatedAd.getNeighbourhood())
+                .district(translatedAd.getDistrict())
+                .accommodationType(translatedAd.getAccommodationType())
+                .price(translatedAd.getPrice())
+                .currency(translatedAd.getCurrency())
+                .propertyProvider(translatedAd.getPropertyProvider())
+                .size(translatedAd.getSize())
+                .floor(translatedAd.getFloor())
+                .totalFloors(translatedAd.getTotalFloors())
+                .gasProvided(translatedAd.isGasProvided())
+                .thermalPowerPlantProvided(translatedAd.isThermalPowerPlantProvided())
+                .forSale(matchingAd.getForSale())
+                .features(translatedAd.getFeatures())
+                .phoneNumber(translatedAd.getPhoneNumber())
+                .yearBuilt(translatedAd.getYearBuilt())
+                .link(translatedAd.getLink())
+                .construction(translatedAd.getConstruction())
+                .description(translatedAd.getDescription())
+                .imageUrls(translatedAd.getImageUrls())
+                .build();
+        }).collect(Collectors.toList());
+
+        return combinedList;
+    }
+
 
 
 

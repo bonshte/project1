@@ -32,26 +32,6 @@ public class GPTService {
     private static final String API_KEY = "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";
 
     private static final JsonParser JSON_PARSER = new JsonParser();
-    public static void main(String[] args) {
-        String str = "this is a cool apartment in Sofia near the cathedral";
-        GPTService service = new GPTService();
-        List<GPTMessageDTO> messageHistory = new LinkedList<>();
-        Scanner sc = new Scanner(System.in);
-        while (true) {
-            String line = sc.nextLine();
-            var response = service.processChat(messageHistory, line);
-            if (service.checkForFunctionCall(response.body())) {
-
-                System.out.println("it is over");
-                service.extractFunctionCall(response.body());
-                break;
-            } else {
-                GPTMessageDTO responseDTO = service.extractContent(response.body());
-                messageHistory.add(responseDTO);
-
-            }
-        }
-    }
 
     public HttpResponse<String> processChat(List<GPTMessageDTO> oldMessages, String message) {
         if (oldMessages.isEmpty()) {
@@ -64,7 +44,6 @@ public class GPTService {
         try {
             String jsonBody = generateChatRequestBody(oldMessages, GPT_MODEL_LATEST);
             HttpResponse<String> response = sendPostRequest(API_ENDPOINT, API_KEY, jsonBody);
-
             validateResponse(response);
             return response;
         } catch (Exception e) {
@@ -72,13 +51,13 @@ public class GPTService {
         }
     }
 
-    public GPTMessageDTO summarizeDescription(String message) {
+    public String summarizeDescription(String message) {
         GPTMessageDTO messageDTO = new GPTMessageDTO(GPT3Role.user, message);
         String requestBody = generateTranslationRequestBody(messageDTO, GPT_MODEL_LATEST);
         try {
             HttpResponse<String> response = sendPostRequest(API_ENDPOINT, API_KEY, requestBody);
             validateResponse(response);
-            return extractContent(response.body());
+            return extractContent(response.body()).content;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

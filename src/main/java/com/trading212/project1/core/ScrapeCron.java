@@ -45,30 +45,11 @@ public class ScrapeCron {
 
 
 
-    @Scheduled(cron = "0 59 * * * *")
+    @Scheduled(cron = "0 0 3 * * *")
     public void scrape() {
+        renewApartmentData(BURGAS_RENT_SCRAPE_CONFIG, false);
         renewApartmentData(BURGAS_PURCHASE_SCRAPE_CONFIG, true);
-//        renewApartmentData(BURGAS_PURCHASE_SCRAPE_CONFIG, true);
     }
-
-
-
-    private  List<Float> generateFloats() {
-        long seed = System.currentTimeMillis();
-        Random rand = new Random(seed);
-        List<Float> floats = new ArrayList<>();
-
-        for (int i = 0; i < 1536; i++) {
-            floats.add(rand.nextFloat());
-        }
-
-        return floats;
-    }
-
-
-
-
-
 
     @Transactional
     private void renewApartmentData(ScrapeConfig scrapeConfig, boolean forSale) {
@@ -99,43 +80,39 @@ public class ScrapeCron {
         List<ScrapedAd> scrapedAdsToSave = getBrandNewAdScrapes(scrapedApartments, activeNotEdited);
 
 
+        List<ScrapedAd> translatedScrapedAds = scrapedAdsToSave
+            .stream()
+            .map(this::translateAd)
+            .toList();
 
-
-        List<List<Float>> embeddings = new ArrayList<>();
-        for (int i = 0 ; i < scrapedAdsToSave.size(); ++i) {
-            embeddings.add(generateFloats());
+        for (var translatedScrapedAd : translatedScrapedAds) {
+            if (translatedScrapedAd.getDescription() != null) {
+                String summarizedDescription = gptService.summarizeDescription(translatedScrapedAd.getDescription());
+                translatedScrapedAd.setDescription(summarizedDescription);
+            }
         }
-        System.out.println("before creation");
-        adService.createAds(scrapedAdsToSave, embeddings, forSale);
-        System.out.println("after creation");
-//        List<ScrapedAd> englishTranslatedScrapedAds = scrapedApartmentsToSave
-//            .stream()
-//            .map(this::translateAd)
-//            .toList();
+
+        for (var scrapedAd : translatedScrapedAds) {
+            System.out.println(scrapedAd);
+        }
+
+        List<String> apartmentDescriptionsForEmbedding = translatedScrapedAds
+            .stream()
+            .map(ScrapedAd::toEmbeddableText)
+            .toList();
+
+        for (var apartmentDescription : apartmentDescriptionsForEmbedding) {
+            System.out.println(apartmentDescription);
+        }
 
 
-//        for (var translatedAd : englishTranslatedScrapedAds) {
-//            GPTService.GPTMessageDTO messageDTO = gptService.summarizeDescription(translatedAd.getDescription());
-//            translatedAd.setDescription(messageDTO.getContent());
-//        }
-//        List<String> apartmentDescriptionsForEmbedding = englishTranslatedScrapedAds
-//            .stream()
-//            .map(ScrapedAd::toEmbeddableText)
-//            .toList();
-//
-//
-//        List<List<Float>> embeddings = apartmentDescriptionsForEmbedding
-//            .stream()
-//            .map(embeddingService::embedWithAda)
-//            .toList();
-//
-//        adService.createAds(
-//            newAds,
-//            embeddings,
-//            forSale
-//        );
-//
-//        adService.saveAdsChanges();
+        List<List<Float>> embeddings = apartmentDescriptionsForEmbedding
+            .stream()
+            .map(embeddingService::embedWithAda)
+            .toList();
+
+        adService.createAds(scrapedAdsToSave, embeddings, translatedScrapedAds, forSale);
+        adService.saveAdsChanges();
     }
 
 

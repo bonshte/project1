@@ -37,7 +37,7 @@ public class ScrapedAd {
 
     public String toEmbeddableText() {
         return "Apartment in" +
-            (district != null ? " " + district : "") +
+            (district != null ? " district " + district : "") +
             (town != null ? " " + town + "," : "") +
             (neighbourhood != null ? " neighbourhood " + neighbourhood + "," : "") +
             (accommodationType != null ? " apartment type " + accommodationType.toDescriptionString() + "," : "") +

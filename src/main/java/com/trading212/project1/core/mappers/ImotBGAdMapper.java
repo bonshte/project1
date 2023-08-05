@@ -236,7 +236,9 @@ public class ImotBGAdMapper {
             String town = addressComponents[1].trim();
             town = replaceAcronymsInTown(town);
             scrapedAd.setTown(town);
-            scrapedAd.setDistrict(addressComponents[0].trim());
+            String district = removeFirstWord(addressComponents[0].trim());
+            scrapedAd.setDistrict(district);
+            System.out.println(scrapedAd.getDistrict());
         } else {
             scrapedAd.setTown(addressComponents[0].trim());
             scrapedAd.setNeighbourhood(addressComponents[1].trim());
@@ -312,6 +314,14 @@ public class ImotBGAdMapper {
         }
     }
 
+    public static String removeFirstWord(String s) {
+        int spaceIndex = s.indexOf(" ");
+        if (spaceIndex != -1) {
+            return s.substring(spaceIndex + 1);
+        } else {
+            return "";
+        }
+    }
 
 
     static {

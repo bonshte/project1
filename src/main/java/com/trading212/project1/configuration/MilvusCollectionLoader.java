@@ -15,7 +15,6 @@ public class MilvusCollectionLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        milvusAdsRepository.query();
         milvusAdsRepository.setUp();
     }
 }
