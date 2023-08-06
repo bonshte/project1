@@ -13,4 +13,5 @@ public class ChatMessageResponse {
     private String message;
     private boolean fromUser;
     private int chatSessionId;
+    private boolean adsFound;
 }

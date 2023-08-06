@@ -1,9 +1,6 @@
 package com.trading212.project1.core.mappers;
 
-import com.trading212.project1.core.models.Ad;
-import com.trading212.project1.core.models.ChatMessage;
-import com.trading212.project1.core.models.ChatSession;
-import com.trading212.project1.core.models.User;
+import com.trading212.project1.core.models.*;
 import com.trading212.project1.core.models.scraping.ScrapedAd;
 import com.trading212.project1.repositories.entities.*;
 
@@ -28,7 +25,8 @@ public class Mappers {
             chatMessageEntity.getSentMessage(),
             chatMessageEntity.getTranslatedMessage(),
             chatMessageEntity.isFromUser(),
-            chatMessageEntity.getTimeSent()
+            chatMessageEntity.getTimestamp(),
+            chatMessageEntity.isAdsFound()
         );
     }
 
@@ -67,6 +65,17 @@ public class Mappers {
         return ad;
     }
 
+    public static ChatSessionRecommendation fromChatSessionRecommendationEntity(ChatSessionRecommendationEntity chatSessionRecommendationEntity) {
+        ChatSessionRecommendation chatSessionRecommendation = new ChatSessionRecommendation();
+        chatSessionRecommendation.setChatSessionId(chatSessionRecommendationEntity.getChatSessionId());
+        chatSessionRecommendation.setRecommendedAt(chatSessionRecommendationEntity.getRecommendedAt());
+        chatSessionRecommendation.setUserId(chatSessionRecommendationEntity.getUserId());
+        chatSessionRecommendation.setForSale(chatSessionRecommendation.isForSale());
+        chatSessionRecommendation.setAdId(chatSessionRecommendation.getAdId());
+
+        return chatSessionRecommendation;
+    }
+
     public static List<Ad> generateTranslatedAds(List<Ad> ads, List<ScrapedAd> translatedVersions) {
 
         Map<String, Ad> adMap = ads.stream().collect(Collectors.toMap(Ad::getLink, ad -> ad));
@@ -102,9 +111,5 @@ public class Mappers {
 
         return combinedList;
     }
-
-
-
-
 
 }

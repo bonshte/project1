@@ -45,10 +45,10 @@ public class ScrapeCron {
 
 
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 40 * * * *")
     public void scrape() {
-        renewApartmentData(BURGAS_RENT_SCRAPE_CONFIG, false);
         renewApartmentData(BURGAS_PURCHASE_SCRAPE_CONFIG, true);
+
     }
 
     @Transactional
@@ -57,33 +57,53 @@ public class ScrapeCron {
         List<ScrapedAd> scrapedApartments = rentScrapeResult.getScrapedAds();
 
         List<Ad> savedAds = adService.getAllAdsByOffer(forSale);
+        //console
+        System.out.println("saved ads");
+        printList(savedAds);
+
         List<Ad> activeAds = getActiveAds(savedAds, scrapedApartments);
-        List<Ad> inactiveAds = getInactiveAds(savedAds, scrapedApartments);
+
+        //console
         System.out.println("active ads");
         printList(activeAds);
+        List<Ad> inactiveAds = getInactiveAds(savedAds, scrapedApartments);
+
+        //console
         System.out.println("inactive ads");
         printList(inactiveAds);
 
         List<Ad> activeButEdited = getActiveButEdited(activeAds, scrapedApartments, forSale);
-        System.out.println("active but edited");
-        printList(activeButEdited);
+
+
 
         List<Ad> adsToDelete = new ArrayList<>();
         adsToDelete.addAll(inactiveAds);
         adsToDelete.addAll(activeButEdited);
         adService.deleteAdsIn(adsToDelete.stream().map(Ad::getAdId).toList(), forSale);
 
+        //console
+        System.out.println("ads to delete");
+        printList(adsToDelete);
 
         List<Ad> activeNotEdited = getActiveNotEdited(activeAds, activeButEdited);
-        System.out.println("active but not edited");
-        printList(activeNotEdited);
-        List<ScrapedAd> scrapedAdsToSave = getBrandNewAdScrapes(scrapedApartments, activeNotEdited);
+        List<ScrapedAd> scrapedAdsToSave = getBrandNewAdScrapes(scrapedApartments, activeNotEdited).stream().limit(10).toList();
 
+        //console
+        System.out.println("just scraped");
+        for (var scrapedAd : scrapedAdsToSave) {
+            System.out.println(scrapedAd);
+        }
 
         List<ScrapedAd> translatedScrapedAds = scrapedAdsToSave
             .stream()
             .map(this::translateAd)
             .toList();
+
+        //console
+        System.out.println("translated ads");
+        for (var a : translatedScrapedAds) {
+            System.out.println(a);
+        }
 
         for (var translatedScrapedAd : translatedScrapedAds) {
             if (translatedScrapedAd.getDescription() != null) {
@@ -92,6 +112,8 @@ public class ScrapeCron {
             }
         }
 
+        //comsole
+        System.out.println("summarized ads");
         for (var scrapedAd : translatedScrapedAds) {
             System.out.println(scrapedAd);
         }
@@ -101,6 +123,8 @@ public class ScrapeCron {
             .map(ScrapedAd::toEmbeddableText)
             .toList();
 
+        //console
+        System.out.println("embeddable text");
         for (var apartmentDescription : apartmentDescriptionsForEmbedding) {
             System.out.println(apartmentDescription);
         }
@@ -113,6 +137,7 @@ public class ScrapeCron {
 
         adService.createAds(scrapedAdsToSave, embeddings, translatedScrapedAds, forSale);
         adService.saveAdsChanges();
+        System.out.println("saved");
     }
 
 
@@ -154,7 +179,7 @@ public class ScrapeCron {
 
     //might be buggy
     private ScrapedAd translateAd(ScrapedAd scrapedAd) {
-        return new ScrapedAd(
+        ScrapedAd translated = new ScrapedAd(
             translationService.translateToEnglish(scrapedAd.getTown()),
             scrapedAd.getNeighbourhood() != null ?
                 translationService.translateToEnglish(scrapedAd.getNeighbourhood()) : null,
@@ -177,10 +202,12 @@ public class ScrapeCron {
                 translationService.translateToEnglish(scrapedAd.getConstruction()) : null,
             scrapedAd.getDescription() != null ?
                 translationService.translateToEnglish(scrapedAd.getDescription()) : null,
-            scrapedAd.getFeatures() != null ?
+            scrapedAd.getFeatures() != null && !scrapedAd.getFeatures().isEmpty() ?
                 translationService.translateToEnglish(scrapedAd.getFeatures()) : scrapedAd.getFeatures(),
             scrapedAd.getImageUrls()
         );
+        System.out.println(translated);
+        return translated;
     }
 
     private List<Ad> getActiveButEdited(List<Ad> activeAds, List<ScrapedAd> scrapedAds, boolean forSale) {

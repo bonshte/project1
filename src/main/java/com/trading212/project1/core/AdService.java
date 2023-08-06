@@ -26,7 +26,6 @@ public class AdService {
 
     @Transactional
     public void deleteAd(Long adId, boolean forSale) {
-
         adRepository.deleteAdById(adId);
         embeddingRepository.deleteAds(
             forSale ? MilvusAdsRepository.SALE_PARTITION : MilvusAdsRepository.RENT_PARTITION
@@ -67,11 +66,16 @@ public class AdService {
             savedAds.add(Mappers.fromAdEntity(savedAdEntity));
         }
 
-        if (savedAds.size() != scrapedAds.size()) {
-            throw new RuntimeException("could not save all apartments");
+        List<Ad> translatedAds = Mappers.generateTranslatedAds(savedAds, translatedScrapedAds);
+        for (var translatedAd : translatedAds) {
+            translatedAd.setPrice(translatedAd.calculateInBGN());
         }
 
-        List<Ad> translatedAds = Mappers.generateTranslatedAds(savedAds, translatedScrapedAds);
+        //console
+        System.out.println("ads passing to milvus");
+        for (var ad : translatedAds) {
+            System.out.println(ad);
+        }
         embeddingRepository.createAds(
             forSale ? MilvusAdsRepository.SALE_PARTITION : MilvusAdsRepository.RENT_PARTITION,
             embeddings,
@@ -79,11 +83,13 @@ public class AdService {
         );
     }
 
-    public List<Ad> getAllAds() {
-        List<AdEntity> adEntities =  adRepository.getAllAds();
-        return adEntities.stream()
-            .map(Mappers::fromAdEntity)
-            .toList();
+    public List<Ad> getAds(List<Long> adIds) {
+        List<Ad> ads = new ArrayList<>();
+        for (var adId : adIds) {
+            AdEntity adEntity = adRepository.getByAdId(adId);
+            ads.add(Mappers.fromAdEntity(adEntity));
+        }
+        return ads;
     }
 
 
@@ -99,11 +105,15 @@ public class AdService {
             .toList();
     }
 
+    public Ad getAdById(Long adId) {
+        AdEntity adEntity = adRepository.getByAdId(adId);
+        return Mappers.fromAdEntity(adEntity);
+    }
 
-
-
+    //check this later
     public List<Ad> findClosestAds(List<Float> embedding, String partitionName,
                                    int topK, SimilaritySearchFilter searchFilter) {
+
         List<Long> recommendedAdIds = embeddingRepository.similaritySearchForAds(embedding,
             searchFilter.toFilterExpression(), partitionName, topK);
 
@@ -111,19 +121,14 @@ public class AdService {
         for (var recommendedAdId : recommendedAdIds) {
             recommendedAds.add(Mappers.fromAdEntity(adRepository.getByAdId(recommendedAdId)));
         }
+        System.out.println("found stuff");
         return recommendedAds;
     }
+
     @Transactional
     public void deleteAdsIn(List<Long> adIds, boolean forSale) {
         for (var adId : adIds) {
             deleteAd(adId, forSale);
         }
     }
-
-    private Ad getAdById(Long adId) {
-        AdEntity adEntity = adRepository.getByAdId(adId);
-        return Mappers.fromAdEntity(adEntity);
-    }
-
-
 }

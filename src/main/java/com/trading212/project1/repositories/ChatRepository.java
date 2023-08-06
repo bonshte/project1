@@ -15,7 +15,7 @@ public interface ChatRepository {
     List<ChatMessageEntity> getChatSessionMessages(int sessionId);
 
     ChatMessageEntity createMessage(int sessionId, String sentMessage,
-                                    String translatedMessage, boolean fromUser, LocalDateTime timestamp);
+                                    String translatedMessage, boolean fromUser, LocalDateTime timestamp, boolean adsFound);
     Optional<ChatSessionEntity> getChatSession(int sessionId);
 
 }

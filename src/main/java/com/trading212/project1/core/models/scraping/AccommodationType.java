@@ -22,4 +22,17 @@ public enum AccommodationType {
             case MAISONETTE -> "maisonette";
         };
     }
+
+    public static AccommodationType fromGPTFunctionArgument(String argument) {
+        switch (argument) {
+            case "one room": return AccommodationType.ONE_ROOM;
+            case "two room": return AccommodationType.TWO_ROOM;
+            case "three room": return AccommodationType.THREE_ROOM;
+            case "four room": return AccommodationType.FOUR_ROOM;
+            case "many room": return AccommodationType.MANY_ROOMS;
+            case "studio": return AccommodationType.STUDIO;
+            case "maisonette": return AccommodationType.MAISONETTE;
+            default: throw new RuntimeException("invalid gpt function call argument for apartment type");
+        }
+    }
 }

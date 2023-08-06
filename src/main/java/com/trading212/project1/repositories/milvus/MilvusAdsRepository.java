@@ -29,7 +29,6 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
     private static final String ID_FIELD = "ad_id";
     private static final String EMBEDDING_FIELD = "property_embedding";
     private static final String TOWN_FIELD = "town";
-    private static final String NEIGHBOURHOOD_FIELD = "neighbourhood";
     private static final String PRICE_FIELD = "price";
     private static final String ACCOMMODATION_TYPE_FIELD = "accommodation_type";
     private static final String COLLECTION_NAME = "ADS";
@@ -48,7 +47,7 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
     }
 
     public void query() {
-        List<String> fields = Arrays.asList(ID_FIELD, TOWN_FIELD, NEIGHBOURHOOD_FIELD, PRICE_FIELD, ACCOMMODATION_TYPE_FIELD);
+        List<String> fields = Arrays.asList(ID_FIELD, TOWN_FIELD, PRICE_FIELD, ACCOMMODATION_TYPE_FIELD);
         QueryParam test = QueryParam.newBuilder()
             .withCollectionName(COLLECTION_NAME)
             .withOutFields(fields)
@@ -59,7 +58,6 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
         QueryResultsWrapper wrapper = new QueryResultsWrapper(response.getData());
         System.out.println(ID_FIELD + ":" + wrapper.getFieldWrapper(ID_FIELD).getFieldData().toString());
         System.out.println(TOWN_FIELD + ":" + wrapper.getFieldWrapper(TOWN_FIELD).getFieldData().toString());
-        System.out.println(NEIGHBOURHOOD_FIELD + ":" + wrapper.getFieldWrapper(NEIGHBOURHOOD_FIELD).getFieldData().toString());
         System.out.println(PRICE_FIELD + ":" + wrapper.getFieldWrapper(PRICE_FIELD).getFieldData().toString());
         System.out.println(ACCOMMODATION_TYPE_FIELD + ":" + wrapper.getFieldWrapper(ACCOMMODATION_TYPE_FIELD).getFieldData().toString());
         System.out.println("Query row count: " + wrapper.getFieldWrapper(ID_FIELD).getRowCount());
@@ -94,12 +92,6 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
                 .withMaxLength(VARCHAR_DEFAULT_LENGTH)
                 .build();
 
-        FieldType neighbourhoodFieldType = FieldType.newBuilder()
-                .withName(NEIGHBOURHOOD_FIELD)
-                .withDataType(DataType.VarChar)
-                .withMaxLength(VARCHAR_DEFAULT_LENGTH)
-                .build();
-
 
         FieldType priceFieldType = FieldType.newBuilder()
                 .withName(PRICE_FIELD)
@@ -122,7 +114,6 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
                 .withCollectionName(COLLECTION_NAME)
                 .addFieldType(embeddingFieldType)
                 .addFieldType(townFieldType)
-                .addFieldType(neighbourhoodFieldType)
                 .addFieldType(priceFieldType)
                 .addFieldType(accommodationTypeFieldType)
                 .addFieldType(idFieldType)
@@ -208,45 +199,29 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
         loadCollection();
     }
 
-    public void deleteAdsNotInIds(String partitionName, List<Long> adIds) {
-        System.out.println("begin delete ads not in milvus");
-        if (adIds.isEmpty()) {
-            deleteAllRecordsInPartition(partitionName);
-            return;
-        }
 
-
-        String expr = "not " + ID_FIELD + " in [" + adIds.stream().map(Object::toString).collect(Collectors.joining(", ")) + "]";
-
-
-
-        DeleteParam deleteParam = DeleteParam.newBuilder()
-            .withCollectionName(COLLECTION_NAME)
-            .withPartitionName(partitionName)
-            .withExpr(expr)
-            .build();
-
-        R<MutationResult> response = milvusClient.delete(deleteParam);
-        handleResponseStatus(response);
-        System.out.println("return from delete ads not in milvus");
-    }
 
     public void createAds(String partitionName, List<List<Float>> embeddings, List<Ad> ads) {
         if (ads.isEmpty()) {
             return;
         }
+        List<Ad> milvusAdFormat = toMilvusFieldsFormat(ads);
+
+        //console
+        System.out.println("ads in milvus creation");
+        for (var ad : milvusAdFormat) {
+            System.out.println(ad);
+        }
 
         List<InsertParam.Field> fields = new ArrayList<>();
         List<Integer> prices = new LinkedList<>();
         List<String> towns = new LinkedList<>();
-        List<String> neighbourhoods = new LinkedList<>();
         List<Long> ids = new LinkedList<>();
         List<String> accommodationTypes = new LinkedList<>();
 
-        for (var ad : ads) {
+        for (var ad : milvusAdFormat) {
             prices.add(ad.getPrice());
             towns.add(ad.getTown());
-            neighbourhoods.add(ad.getNeighbourhood());
             ids.add(ad.getAdId());
             accommodationTypes.add(ad.getAccommodationType().toString());
         }
@@ -254,7 +229,6 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
         fields.add(new InsertParam.Field(ACCOMMODATION_TYPE_FIELD, accommodationTypes));
         fields.add(new InsertParam.Field(ID_FIELD, ids));
         fields.add(new InsertParam.Field(TOWN_FIELD, towns));
-        fields.add(new InsertParam.Field(NEIGHBOURHOOD_FIELD, neighbourhoods));
         fields.add(new InsertParam.Field(PRICE_FIELD, prices));
         fields.add(new InsertParam.Field(EMBEDDING_FIELD, embeddings));
 
@@ -267,10 +241,10 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
 
         R<MutationResult> response = milvusClient.insert(insertParam);
         handleResponseStatus(response);
-        System.out.println("created in milvus?");
         query();
-        System.out.println("after query");
     }
+
+
 
     @Override
     public List<Long> similaritySearchForAds(List<Float> searchEmbedding, String expr, String partitionName, int topK) {
@@ -290,6 +264,11 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
         R<SearchResults> response = milvusClient.search(searchParam);
         handleResponseStatus(response);
         SearchResultsWrapper wrapper = new SearchResultsWrapper(response.getData().getResults());
+
+        if (response.getData().getStatus().getReason().equals("search result is empty")) {
+            return new ArrayList<>();
+        }
+
         List<Long> similarPropertiesId = wrapper.getFieldData(ID_FIELD, 0)
                 .stream()
                 .map(object -> (Long) object)
@@ -349,5 +328,18 @@ public class MilvusAdsRepository implements EmbeddingAdsRepository {
             .build());
         handleResponseStatus(response);
     }
+
+    private List<Ad> toMilvusFieldsFormat(List<Ad> ads) {
+        return ads.stream()
+            .map(ad -> {
+                if (ad.getTown() != null) {
+                    ad.setTown(ad.getTown().toLowerCase().replaceFirst("^(town of|city of) ", "").trim());
+                }
+
+                return ad;
+            })
+            .collect(Collectors.toList());
+    }
+
 
 }

@@ -8,7 +8,8 @@ import java.util.List;
 public interface RecommendationRepository {
     List<ChatSessionRecommendationEntity> getRecommendationsForSession(int sessionId);
 
-    ChatSessionRecommendationEntity createRecommendationForSession(Long adId, int sessionId, LocalDateTime timestamp, int userId, boolean forSale);
+    ChatSessionRecommendationEntity createRecommendationForSession(Long adId, int sessionId,
+                                                                   LocalDateTime timestamp, int userId, boolean forSale);
 
 
     List<ChatSessionRecommendationEntity> getRecommendationsForUser(int userId);

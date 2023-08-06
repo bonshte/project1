@@ -5,11 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class GPTFunctionCallDTO {
     private String functionName;
-    private String arguments;
+    private Map<String, Object> arguments;
 }

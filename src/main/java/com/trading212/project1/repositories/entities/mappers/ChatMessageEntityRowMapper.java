@@ -16,8 +16,9 @@ public class ChatMessageEntityRowMapper implements RowMapper {
         chatMessageEntity.setSentMessage(rs.getString("sent_message"));
         chatMessageEntity.setTranslatedMessage(rs.getString("translated_message"));
         chatMessageEntity.setFromUser(rs.getBoolean("from_user"));
+        chatMessageEntity.setAdsFound(rs.getBoolean("ads_found"));
         Timestamp timestamp = rs.getTimestamp("timestamp");
-        chatMessageEntity.setTimeSent(timestamp.toLocalDateTime());
+        chatMessageEntity.setTimestamp(timestamp.toLocalDateTime());
         return chatMessageEntity;
     }
 }

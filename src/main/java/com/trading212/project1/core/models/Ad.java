@@ -1,5 +1,6 @@
 package com.trading212.project1.core.models;
 
+import com.beust.jcommander.Strings;
 import com.trading212.project1.core.models.scraping.AccommodationType;
 import com.trading212.project1.core.models.scraping.Currency;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,40 @@ public class Ad {
     private String construction;
     private String description;
     private List<String> imageUrls;
+
+    public int calculateInBGN() {
+        double priceInBGN;
+        switch (currency) {
+            case BGN:
+                priceInBGN = price;
+                break;
+            case USD:
+                priceInBGN = price * 1.8;
+                break;
+            case EURO:
+                priceInBGN = price * 1.95;
+                break;
+            default:
+                priceInBGN = price;
+                break;
+        }
+        return (int) Math.round(priceInBGN);
+    }
+
+    public String getSummary() {
+        return "Apartment in" +
+            (district != null ? " district " + district : "") +
+            (town != null ? " " + town + "," : "") +
+            (neighbourhood != null ? " neighbourhood - " + neighbourhood + "," : "") +
+            (accommodationType != null ? " apartment type - " + accommodationType.toDescriptionString() + "," : "") +
+            (price != null ? " price: " + calculateInBGN() + "," : "") +
+            (propertyProvider != null ? " " + propertyProvider + "," : "") +
+            (size != null ? " square meters " + size + "," : "") +
+            (gasProvided ? " has gas heating," : "") +
+            (thermalPowerPlantProvided ? " has thermal power plant heating," : "") +
+            (features != null ? " features - " + Strings.join( " ", features) + "," : "") +
+            (description != null ? " " + description : "");
+    }
 
 
 }

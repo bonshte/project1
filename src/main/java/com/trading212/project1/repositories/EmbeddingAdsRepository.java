@@ -20,7 +20,7 @@ public interface EmbeddingAdsRepository {
 
     void releaseCollection();
 
-    void deleteAdsNotInIds(String partitionName, List<Long> adIds);
+//    void deleteAdsNotInIds(String partitionName, List<Long> adIds);
 
 
 

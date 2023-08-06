@@ -17,4 +17,5 @@ public class ChatMessage {
     private String translatedMessage;
     private boolean fromUser;
     private LocalDateTime timeSent;
+    private boolean adsFound;
 }

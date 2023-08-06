@@ -2,6 +2,7 @@ package com.trading212.project1.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -11,9 +12,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.openqa.selenium.json.TypeToken;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -63,6 +66,28 @@ public class GPTService {
         }
     }
 
+    public String summarizeRecommendations(List<GPTMessageDTO> oldMessages, String recommendations) {
+
+        if (oldMessages == null) {
+            System.out.println("list null");
+        }
+        if (recommendations == null) {
+            System.out.println("null rec");
+        }
+        GPTMessageDTO systemMessage = new GPTMessageDTO(GPT3Role.system, recommendations);
+        oldMessages.add(systemMessage);
+        try {
+            String jsonBody = generateChatRequestBody(oldMessages, GPT_MODEL_LATEST);
+            HttpResponse<String> response = sendPostRequest(API_ENDPOINT, API_KEY, jsonBody);
+            validateResponse(response);
+            System.out.println("here");
+            System.out.println(response.body());
+            return extractContent(response.body()).content;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public GPTMessageDTO extractContent(String jsonString) {
         JsonObject jsonObject = JSON_PARSER.parse(jsonString).getAsJsonObject();
         JsonObject choiceObj = jsonObject.get("choices").getAsJsonArray().get(0).getAsJsonObject();
@@ -81,13 +106,18 @@ public class GPTService {
     }
 
     public GPTFunctionCallDTO extractFunctionCall(String jsonString) {
-        JsonObject jsonObject = JSON_PARSER.parse(jsonString).getAsJsonObject();
-        JsonObject choiceObj = jsonObject.get("choices").getAsJsonArray().get(0).getAsJsonObject();
-        JsonObject messageObj = choiceObj.get("message").getAsJsonObject();
-        JsonObject functionCallObj = messageObj.get("function_call").getAsJsonObject();
+        JsonObject jsonObject = new Gson().fromJson(jsonString, JsonObject.class);
+        JsonObject choiceObj = jsonObject.getAsJsonArray("choices").get(0).getAsJsonObject();
+        JsonObject functionCallObj = choiceObj.getAsJsonObject("message").getAsJsonObject("function_call");
         String name = functionCallObj.get("name").getAsString();
-        String arguments = functionCallObj.get("arguments").getAsString();
+
+        Type type = new TypeToken<Map<String, Object>>(){}.getType();
+        String argumentsString = functionCallObj.get("arguments").getAsString();
+        Map<String, Object> arguments = new Gson().fromJson(argumentsString, type);
+
         return new GPTFunctionCallDTO(name, arguments);
+
+
     }
 
     private  HttpResponse<String> sendPostRequest(String apiUrl, String apiKey, String jsonPayload)
@@ -98,6 +128,7 @@ public class GPTService {
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
                 .build();
+
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
@@ -112,6 +143,8 @@ public class GPTService {
     }
 
     private String generateTranslationRequestBody(GPTMessageDTO message, String modelName) {
+        System.out.println("this is the message content");
+        System.out.println(message.content);
         JsonObject requestBody = new JsonObject();
         requestBody.addProperty("model", modelName);
         JsonArray messages = new JsonArray();
@@ -121,12 +154,34 @@ public class GPTService {
         systemMessage.addProperty("content", AGENT.DESCRIPTION_AGENT_SUMMARIZER);
         messages.add(systemMessage);
 
-        messages.add(new JsonParser().parse(message.toString()).getAsJsonObject());
+        JsonObject userMessage = new JsonObject();
+        userMessage.addProperty("role", message.getChatRole().toString());
+        userMessage.addProperty("content", message.getContent());
+        messages.add(userMessage);
 
         requestBody.add("messages", messages);
 
         return requestBody.toString();
     }
+
+//    private String generateTranslationRequestBody(GPTMessageDTO message, String modelName) {
+//        System.out.println("this is the message content");
+//        System.out.println(message.content);
+//        JsonObject requestBody = new JsonObject();
+//        requestBody.addProperty("model", modelName);
+//        JsonArray messages = new JsonArray();
+//
+//        JsonObject systemMessage = new JsonObject();
+//        systemMessage.addProperty("role", "system");
+//        systemMessage.addProperty("content", AGENT.DESCRIPTION_AGENT_SUMMARIZER);
+//        messages.add(systemMessage);
+//
+//        messages.add(new JsonParser().parse(message.toString()).getAsJsonObject());
+//
+//        requestBody.add("messages", messages);
+//
+//        return requestBody.toString();
+//    }
 
     private String generateChatRequestBody(List<GPTMessageDTO> messages, String modelName) {
         List<Map<String, String>> messagesInBody = new ArrayList<>();
@@ -150,7 +205,7 @@ public class GPTService {
                 ),
                 "neighbourhoods", Map.of(
                         "type", "string",
-                        "description", "the desired neighbourhoods by the user"
+                        "description", "the desired neighbourhoods by the user separated by ,"
                 ),
                 "apartmentType", Map.of(
                         "type", "string",
@@ -168,7 +223,7 @@ public class GPTService {
                 ),
                 "features", Map.of(
                         "type", "string",
-                        "description", "any additional features like pet-friendly, new furniture, view of the ocean, gym nearby etc."
+                        "description", "any additional features like pet-friendly, new furniture, view of the ocean, gym nearby etc. They should be split by ,"
                 )
 
         );
@@ -176,7 +231,7 @@ public class GPTService {
         Map<String, Object> functionParameters = Map.of(
                 "type", "object",
                 "properties", functionParameterProperties,
-                "required", List.of("town", "apartmentType", "forRent", "price")
+                "required", List.of("town", "apartmentType", "forRent", "price", "currency")
         );
 
         Map<String, Object> function = Map.of(
@@ -222,7 +277,7 @@ public class GPTService {
     }
 
     static class AGENT {
-        private static final String DESCRIPTION_AGENT_SUMMARIZER = "You are agent who extracts information from apartment description. You want to extract only the features from the description such as proximity to stores, schools, buildings or new furniture, internet connection, security etc. You will not include any information about the broker, agency, phone numbers or advertisements of other properties. You will not include the price or size of the apartment. You will reply only with the extracted features in a informational sentences and you will not give any explanations. If no specific features were mentioned you will reply with \"none\".";
-        private static final String RECOMMENDATION_AGENT_MESSAGE = "You are an agent who gathers information from users about the desired apartment they want to rent or buy. You want to collect data for town (city or village), neighbourhoods, price, currency, square meters, type of apartment, additional features. You will guide the client in providing information about what apartment they want.If the user does not specify currency he means bgn. When user wants the apartment to be near or close to something treat that as a feature.If the user provides a range for price or square meters take the average. You will not answer any questions unrelated to apartment search.";
+        private static final String DESCRIPTION_AGENT_SUMMARIZER = "You are agent who extracts information from apartment description. You want to extract only the features from the description such as proximity to stores, schools, buildings or new furniture, internet connection, security etc. You will not include any information about the broker, agency, phone numbers or advertisements of other properties. You will not include the price or size of the apartment. You will reply only with the extracted features in a informational sentences and you will not give any explanations. If no specific features were mentioned you will reply with \"no features\".";
+        private static final String RECOMMENDATION_AGENT_MESSAGE = "You are an agent who gathers information from users about the desired apartment they want to rent or buy. You want to collect data for town (city or village), neighbourhoods, price, currency, type of apartment, additional features. You will guide the client in providing information about what apartment they want.You must explicitly collect the information about type of apartment and currency.When user wants the apartment to be near or close to something treat that as a feature.If the user provides a range for price or square meters take the average. You must information for town, currency and price before making function call. The only possible currencies are \"bgn\" and \"euro\". The allowed apartment types are only \"one room\", \"two room\", \"three room\", \"four room\", \"many room\", \"maisonette\" and \"studio\". You will not answer any questions unrelated to apartment search. Before making a function call to get recommended properties you will ask the client if the data you gatherer is what they want and proceed with function call only if they agree.";
     }
 }

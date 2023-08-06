@@ -58,7 +58,7 @@ public class MariaDBChatRepository implements ChatRepository {
 
     @Override
     public ChatMessageEntity createMessage(int chatSessionId, String sentMessage, String translatedMessage,
-                                           boolean fromUser, LocalDateTime timestamp) {
+                                           boolean fromUser, LocalDateTime timestamp, boolean adsFound) {
         return txTemplate.execute(status -> {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(conn -> {
@@ -68,6 +68,7 @@ public class MariaDBChatRepository implements ChatRepository {
                 ps.setString(3, translatedMessage);
                 ps.setBoolean(4, fromUser);
                 ps.setTimestamp(5, Timestamp.valueOf(timestamp));
+                ps.setBoolean(6, adsFound);
 
                 return ps;
             }, keyHolder);
@@ -78,8 +79,9 @@ public class MariaDBChatRepository implements ChatRepository {
             chatMessageEntity.setSentMessage(sentMessage);
             chatMessageEntity.setTranslatedMessage(translatedMessage);
             chatMessageEntity.setFromUser(fromUser);
-            chatMessageEntity.setTimeSent(timestamp);
+            chatMessageEntity.setTimestamp(timestamp);
             chatMessageEntity.setMessageId(messageId);
+            chatMessageEntity.setAdsFound(adsFound);
             return chatMessageEntity;
         });
     }
@@ -109,12 +111,12 @@ public class MariaDBChatRepository implements ChatRepository {
             """;
 
         private static final String CREATE_CHAT_MESSAGE = """
-            INSERT INTO chatMessage(chat_session_id, sent_message, translated_message, from_user, timestamp)
-            VALUES(?,?,?,?,?);
+            INSERT INTO chatMessage(chat_session_id, sent_message, translated_message, from_user, timestamp, ads_found)
+            VALUES(?,?,?,?,?,?);
             """;
 
         private static final String GET_CHAT_SESSION_MESSAGES = """
-            SELECT message_id, chat_session_id,sent_message, translated_message, from_user, timestamp
+            SELECT message_id, chat_session_id,sent_message, translated_message, from_user, timestamp, ads_found
             FROM chatMessage
             WHERE chat_session_id = ?;
             """;

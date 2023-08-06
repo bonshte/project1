@@ -17,5 +17,6 @@ public class ChatMessageEntity {
     private String sentMessage;
     private String translatedMessage;
     private boolean fromUser;
-    private LocalDateTime timeSent;
+    private LocalDateTime timestamp;
+    private boolean adsFound;
 }

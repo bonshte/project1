@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 public class ImotBGAdMapper {
     private static final List<String> USELESS_FEATURES = new LinkedList<>();
     private static final String IMOTBG_BASE_URL = "https://www.imot.bg/";
+    private static final String HTTPS = "https://";
     private static final Pattern UNIQUE_ID_REGEX_PATTERN = Pattern.compile("adv=(\\w+)");
 
     private ImotBGAdMapper() {
@@ -54,7 +55,7 @@ public class ImotBGAdMapper {
         if (mainPictureElement != null) {
             String mainPictureSrc = mainPictureElement.attr("src");
             if (!mainPictureSrc.isBlank() && !mainPictureSrc.isEmpty()) {
-                imageUrls.add(mainPictureSrc.substring(2));
+                imageUrls.add(HTTPS + mainPictureSrc.substring(2));
             }
         }
 
@@ -64,7 +65,7 @@ public class ImotBGAdMapper {
             for (Element img : imgElements) {
                 String src = img.attr("src");
                 if (!src.isBlank()) {
-                    imageUrls.add(src.substring(2));
+                    imageUrls.add(HTTPS + src.substring(2));
                 }
             }
         }
@@ -238,7 +239,6 @@ public class ImotBGAdMapper {
             scrapedAd.setTown(town);
             String district = removeFirstWord(addressComponents[0].trim());
             scrapedAd.setDistrict(district);
-            System.out.println(scrapedAd.getDistrict());
         } else {
             scrapedAd.setTown(addressComponents[0].trim());
             scrapedAd.setNeighbourhood(addressComponents[1].trim());

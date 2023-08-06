@@ -39,14 +39,14 @@ public class ScrapedAd {
         return "Apartment in" +
             (district != null ? " district " + district : "") +
             (town != null ? " " + town + "," : "") +
-            (neighbourhood != null ? " neighbourhood " + neighbourhood + "," : "") +
-            (accommodationType != null ? " apartment type " + accommodationType.toDescriptionString() + "," : "") +
-            (price != null ? " price " + calculateInBGN().intValue() + "," : "") +
+            (neighbourhood != null ? " neighbourhood - " + neighbourhood + "," : "") +
+            (accommodationType != null ? " apartment type - " + accommodationType.toDescriptionString() + "," : "") +
+            (price != null ? " price: " + calculateInBGN().intValue() + "," : "") +
             (propertyProvider != null ? " " + propertyProvider + "," : "") +
             (size != null ? " square meters " + size + "," : "") +
             (isGasProvided() ? " has gas heating," : "") +
             (isThermalPowerPlantProvided() ? " has thermal power plant heating," : "") +
-            (features != null ? " features " + Strings.join( " ", features) + "," : "") +
+            (features != null ? " features - " + Strings.join( " ", features) + "," : "") +
             (description != null ? " " + description : "");
     }
 

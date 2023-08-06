@@ -20,6 +20,7 @@ CREATE TABLE chatMessage (
     sent_message TEXT NOT NULL,
     translated_message TEXT NOT NULL,
     from_user BOOLEAN NOT NULL,
+    ads_found BOOLEAN NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (chat_session_id) REFERENCES chatSession(chat_session_id)
 );
@@ -56,7 +57,7 @@ CREATE TABLE adFeature (
 
 CREATE TABLE adImageUrl (
     ad_id BIGINT,
-    image_url TEXT,
+    image_url VARCHAR(511),
     PRIMARY KEY (ad_id, image_url),
     FOREIGN KEY (ad_id) REFERENCES ads(ad_id) ON DELETE CASCADE
 );
