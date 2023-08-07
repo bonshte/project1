@@ -10,13 +10,7 @@ import com.trading212.project1.core.models.scraping.AccommodationType;
 import com.trading212.project1.core.models.scraping.Currency;
 import com.trading212.project1.repositories.ChatRepository;
 import com.trading212.project1.repositories.entities.ChatMessageEntity;
-import com.trading212.project1.repositories.entities.ChatSessionEntity;
 import com.trading212.project1.repositories.milvus.MilvusAdsRepository;
-import org.checkerframework.checker.units.qual.C;
-import org.json.HTTP;
-import org.springframework.cglib.core.Local;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.net.http.HttpResponse;
@@ -55,7 +49,6 @@ public class ChatService {
 
     @Transactional
     public ChatMessage processUserMessage(int userId, int sessionId, String message) {
-        //ako nyama sesia ya suzdavam
         if (sessionId == 0) {
             if (!authorizationService.isAuthorizedUserDataRequest(userId)) {
                 throw new UnauthorizedException("access denied");
@@ -70,61 +63,42 @@ public class ChatService {
             }
         }
         Language detectedLanguage = languageDetectionService.detectLanguage(message);
-
-        //prevejdam suobshtenieto v angliski za gpt
-        String messageForGPTChat = message;
+        String userMessageForGPTChat = message;
         if (detectedLanguage != Language.ENGLISH && translationService.isTranslateSupported(detectedLanguage)) {
-            messageForGPTChat = translationService.translateToEnglish(message);
+            userMessageForGPTChat = translationService.translateToEnglish(message);
         }
 
-        //suzdavam si suobshtenieto koeto e ot potrebitelya
         ChatMessage userMessage = new ChatMessage();
         userMessage.setChatSessionId(sessionId);
         userMessage.setSentMessage(message);
-        userMessage.setTranslatedMessage(messageForGPTChat);
+        userMessage.setTranslatedMessage(userMessageForGPTChat);
         userMessage.setFromUser(true);
         userMessage.setTimeSent(LocalDateTime.now());
 
-
-        List<ChatMessage> oldChatMessages = getChatSessionMessages(sessionId);
-
-        List<ChatMessage> sortedChatMessages = oldChatMessages.stream()
+        List<ChatMessage> sortedChatMessages = getChatSessionMessages(sessionId).stream()
             .sorted(Comparator.comparing(ChatMessage::getTimeSent)
                 .thenComparing(ChatMessage::isFromUser, Comparator.reverseOrder()))
             .toList();
 
-        //suzdavam si istoriyata ot samo gpt suobshteniyata
-        List<GPTService.GPTMessageDTO> oldChatHistoryWithGPT = new ArrayList<>();
-        for (var chatMessage : sortedChatMessages) {
-            oldChatHistoryWithGPT.add(
-                new GPTService.GPTMessageDTO(
-                    (chatMessage.isFromUser() ? GPT3Role.user : GPT3Role.assistant),
-                    chatMessage.getTranslatedMessage()
-                )
-            );
-        }
+        List<GPTService.GPTMessageDTO> chatHistoryWithGPT = gptService.toGPTMessageHistory(sortedChatMessages);
 
-        //pitam chata s novoto suobshtenie
-        HttpResponse<String> gptResponse = gptService.processChat(oldChatHistoryWithGPT, messageForGPTChat);
+        HttpResponse<String> gptResponse = gptService.processChat(chatHistoryWithGPT, userMessageForGPTChat);
 
-        //ako ima function call
         if (gptService.checkForFunctionCall(gptResponse.body())) {
 
             GPTFunctionCallDTO functionCallDTO = gptService.extractFunctionCall(gptResponse.body());
-
-
             List<Ad> recommendations = getRecommendations(functionCallDTO.getArguments());
 
             if (recommendations.isEmpty()) {
-                String messageForGPT = "Sorry, I found nothing that matches your description";
-                String messageForUser = messageForGPT;
+                String messageFromBotInGPTChat = "Sorry, I found nothing that matches your description";
+                String messageFromBot = messageFromBotInGPTChat;
                 if (detectedLanguage != Language.ENGLISH && translationService.isTranslateSupported(detectedLanguage)) {
-                    messageForGPT = translationService.translateToLanguage(messageForGPT, detectedLanguage);
+                    messageFromBotInGPTChat = translationService.translateToLanguage(messageFromBotInGPTChat, detectedLanguage);
                 }
                 ChatMessage botMessage = new ChatMessage(
                     sessionId,
-                    messageForUser,
-                    messageForGPT,
+                    messageFromBot,
+                    messageFromBotInGPTChat,
                     false,
                     LocalDateTime.now(),
                     false
@@ -133,37 +107,33 @@ public class ChatService {
                 saveConversationCompletion(userMessage, botMessage);
                 return botMessage;
             }
-            //suzdvam tezi rekomendacii
             recommendationService.createRecommendations(recommendations, userId, sessionId);
-            GPTService.GPTMessageDTO userMessageToGPT = new GPTService.GPTMessageDTO(
+            GPTService.GPTMessageDTO userMessageToGPTDTO = new GPTService.GPTMessageDTO(
                 GPT3Role.user,
-                messageForGPTChat
+                userMessageForGPTChat
             );
 
-            //vzimam starata istorya s gpt
-            List<GPTService.GPTMessageDTO> currentMessageHistory = new ArrayList<>(oldChatHistoryWithGPT);
-            currentMessageHistory.add(userMessageToGPT);
+            List<GPTService.GPTMessageDTO> currentMessageHistory = new ArrayList<>(chatHistoryWithGPT);
+            currentMessageHistory.add(userMessageToGPTDTO);
 
-            //pitam go da summarize poluchenite  recomendacii
-            List<String> summaries = new ArrayList<>();
+            List<String> recommendationSummaries = new ArrayList<>();
             for (var recommendation : recommendations) {
-                summaries.add(recommendation.getSummary());
+                recommendationSummaries.add(recommendation.getSummaryForChatBot());
+                System.out.println("recommendation summary: " + recommendation.getSummaryForChatBot());
             }
 
-            String summaryResponseFromGPT = gptService.summarizeRecommendations(currentMessageHistory,
-                "summarise matching properties found:" + summaries);
-            String summaryForUser = summaryResponseFromGPT;
+            String summaryFromGPT = gptService.summarizeRecommendations(currentMessageHistory,
+                "summarise matching properties found:" + recommendationSummaries);
+            String summaryForUser = summaryFromGPT;
 
-            //prevejdam v pravilen ezik poluchenoto summary
             if (detectedLanguage != Language.ENGLISH && translationService.isTranslateSupported(detectedLanguage)) {
                 summaryForUser = translationService.translateToLanguage(summaryForUser, detectedLanguage);
             }
 
-            //
             ChatMessage botMessage = new ChatMessage();
             botMessage.setChatSessionId(sessionId);
             botMessage.setSentMessage(summaryForUser);
-            botMessage.setTranslatedMessage(summaryResponseFromGPT);
+            botMessage.setTranslatedMessage(summaryFromGPT);
             botMessage.setFromUser(false);
             botMessage.setTimeSent(LocalDateTime.now());
             botMessage.setAdsFound(true);
@@ -185,7 +155,6 @@ public class ChatService {
             botMessage.setTranslatedMessage(gptResponseString);
             botMessage.setFromUser(false);
             botMessage.setTimeSent(LocalDateTime.now());
-
 
             saveConversationCompletion(userMessage, botMessage);
             return botMessage;
@@ -220,7 +189,7 @@ public class ChatService {
         SimilaritySearchFilter similaritySearchFilter = new SimilaritySearchFilter(
             userRequirement.getTown(),
             userRequirement.getPrice() != null ? userRequirement.priceInBGN() : null,
-            userRequirement.getAccommodationType().toString()
+            userRequirement.getAccommodationType() != null ? userRequirement.getAccommodationType().toString() : null
         );
         System.out.println("the similarity search filter");
         System.out.println(similaritySearchFilter);

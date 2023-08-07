@@ -37,6 +37,26 @@ public class Ad {
     private String description;
     private List<String> imageUrls;
 
+
+    public String getSummaryForChatBot() {
+        return "Apartment in" +
+                (district != null ? " district " + district : "") +
+                (town != null ? " " + town + "," : "") +
+                (neighbourhood != null ? " neighbourhood - " + neighbourhood + "," : "") +
+                (accommodationType != null ? " apartment type - " + accommodationType.toDescriptionString() + "," : "") +
+                (price != null ? " price: " + calculateInBGN() + " bgn," : "") +
+                (propertyProvider != null ? " " + propertyProvider + "," : "") +
+                (phoneNumber != null ? "phone number: " + phoneNumber + "," : "") +
+                (size != null ? " square meters " + size + "," : "") +
+                (floor != null ? " on floor " + floor + "," : "") +
+                (totalFloors != null ? " total floors " + totalFloors + "," : "") +
+                (gasProvided ? " has gas heating," : "") +
+                (thermalPowerPlantProvided ? " has thermal power plant heating," : "") +
+                (yearBuilt != null ? " year built " + yearBuilt + "," : "") +
+                (features != null ? " features - " + Strings.join( " ", features) + "," : "") +
+                (description != null ? " " + description : "");
+    }
+
     public int calculateInBGN() {
         double priceInBGN;
         switch (currency) {
@@ -70,6 +90,4 @@ public class Ad {
             (features != null ? " features - " + Strings.join( " ", features) + "," : "") +
             (description != null ? " " + description : "");
     }
-
-
 }

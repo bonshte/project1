@@ -11,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +19,7 @@ import java.util.List;
 @Service
 public class DeepLTranslationService {
     private static final String DEEPL_END_POINT = "https://api-free.deepl.com/v2/translate";
-    private static final String API_KEY = "5a53ed53-d5d3-5298-a1c3-39db9275eaa6:fx";
+    private static final String API_KEY = "your-api-key";
 
     private static final String ENG_LANG_CODE = "EN";
     private static final String BG_LANG_CODE = "BG";
@@ -28,7 +29,9 @@ public class DeepLTranslationService {
     public String translateToEnglish(String text) {
         try {
             HttpResponse<String> response = sendTranslationRequest(text, ENG_LANG_CODE);
+            System.out.println(response.body());
             handleResponse(response);
+
             return extractTranslation(response);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -98,33 +101,16 @@ public class DeepLTranslationService {
     private String getLangCode(Language language) {
         return switch (language) {
             case BULGARIAN -> "BG";
-            case CZECH -> "CS";
-            case DANISH -> "DA";
-            case GERMAN -> "DE";
             case GREEK -> "EL";
             case ENGLISH -> "EN";
             case SPANISH -> "ES";
-            case ESTONIAN -> "ET";
-            case FINNISH -> "FI";
             case FRENCH -> "FR";
-            case HUNGARIAN -> "HU";
-            case INDONESIAN -> "ID";
             case ITALIAN -> "IT";
             case JAPANESE -> "JA";
             case KOREAN -> "KO";
-            case LITHUANIAN -> "LT";
-            case LATVIAN -> "LV";
             case DUTCH -> "NL";
             case POLISH -> "PL";
-            case PORTUGUESE -> "PT";
-            case ROMANIAN -> "RO";
-            case RUSSIAN -> "RU";
-            case SLOVAK -> "SK";
-            case SLOVENE -> "SL";
-            case SWEDISH -> "SV";
             case TURKISH -> "TR";
-            case UKRAINIAN -> "UK";
-            case CHINESE -> "ZH";
             default -> "UNKNOWN";
         };
     }

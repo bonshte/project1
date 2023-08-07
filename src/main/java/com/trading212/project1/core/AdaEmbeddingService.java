@@ -22,7 +22,7 @@ public class AdaEmbeddingService {
     private static final Gson GSON = new Gson();
     private static final String ADA_MODEL = "text-embedding-ada-002";
     private static final String END_POINT = "https://api.openai.com/v1/embeddings";
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "your api key";
     public static void main(String[] args) {
         AdaEmbeddingService adaEmbeddingService = new AdaEmbeddingService();
         List<Float> floats = adaEmbeddingService.embedWithAda("i am a cool guy, and you are not as cool as i am");

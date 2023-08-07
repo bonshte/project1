@@ -29,12 +29,12 @@ public class ScrapeCron {
         this.adService = adService;
     }
 
-    private static final ScrapeConfig SOFIA_PURCHASE_SCRAPE_CONFIG = new ScrapeConfig(
+    private static final ScrapeConfig PURCHASE_SCRAPE_CONFIG = new ScrapeConfig(
             ImotBGUtils.PURCHASE_SCRAPE_URL,
             ImotBGUtils::getIdForPurchaseAccommodation,
             ImotBGAdMapper::fromDocument,
             ImotBGUtils.SOFIA_PURCHASE_SEARCH_FILTERS);
-    private static final ScrapeConfig SOFIA_RENT_SCRAPE_CONFIG = new ScrapeConfig(
+    private static final ScrapeConfig RENT_SCRAPE_CONFIG = new ScrapeConfig(
             ImotBGUtils.RENT_SCRAPE_URL,
             ImotBGUtils::getIdForRentAccommodation,
             ImotBGAdMapper::fromDocument,
@@ -45,99 +45,82 @@ public class ScrapeCron {
 
 
 
-    @Scheduled(cron = "0 57 * * * *")
+    //@Scheduled(cron = "0 0 3 * * *")
     public void scrape() {
-        renewApartmentData(SOFIA_PURCHASE_SCRAPE_CONFIG, true);
+        renewApartmentData(RENT_SCRAPE_CONFIG, true);
 
     }
 
     @Transactional
     private void renewApartmentData(ScrapeConfig scrapeConfig, boolean forSale) {
+
         ScrapingResult rentScrapeResult = scrapingService.scrape(scrapeConfig);
         List<ScrapedAd> scrapedApartments = rentScrapeResult.getScrapedAds();
-//
-//        List<Ad> savedAds = adService.getAllAdsByOffer(forSale);
-//        //console
-//        System.out.println("saved ads");
-//        printList(savedAds);
-//
-//        List<Ad> activeAds = getActiveAds(savedAds, scrapedApartments);
-//
-//        //console
-//        System.out.println("active ads");
-//        printList(activeAds);
-//        List<Ad> inactiveAds = getInactiveAds(savedAds, scrapedApartments);
-//
-//        //console
-//        System.out.println("inactive ads");
-//        printList(inactiveAds);
-//
-//        List<Ad> activeButEdited = getActiveButEdited(activeAds, scrapedApartments, forSale);
-//
-//
-//
-//        List<Ad> adsToDelete = new ArrayList<>();
-//        adsToDelete.addAll(inactiveAds);
-//        adsToDelete.addAll(activeButEdited);
+
+        List<Ad> savedAds = adService.getAllAdsByOffer(forSale);
+
+        List<Ad> activeAds = getActiveAds(savedAds, scrapedApartments);
+        //console
+        System.out.println("active ads");
+        printList(activeAds);
+        List<Ad> inactiveAds = getInactiveAds(savedAds, scrapedApartments);
+
+        //console
+        System.out.println("inactive ads");
+        printList(inactiveAds);
+
+        List<Ad> activeButEdited = getActiveButEdited(activeAds, scrapedApartments, forSale);
+
+        //console
+        System.out.println("active edited ads");
+        printList(activeButEdited);
+
+        List<Ad> adsToDelete = new ArrayList<>();
+
+        //console
+        System.out.println("to delete ads");
+        printList(adsToDelete);
+
+        adsToDelete.addAll(inactiveAds);
+        adsToDelete.addAll(activeButEdited);
 //        adService.deleteAdsIn(adsToDelete.stream().map(Ad::getAdId).toList(), forSale);
-//
-//        //console
-//        System.out.println("ads to delete");
-//        printList(adsToDelete);
-//
-//        List<Ad> activeNotEdited = getActiveNotEdited(activeAds, activeButEdited);
-//        List<ScrapedAd> scrapedAdsToSave = getBrandNewAdScrapes(scrapedApartments, activeNotEdited).stream().limit(10).toList();
-//
-//        //console
-//        System.out.println("just scraped");
-//        for (var scrapedAd : scrapedAdsToSave) {
-//            System.out.println(scrapedAd);
-//        }
-//
-//        List<ScrapedAd> translatedScrapedAds = scrapedAdsToSave
-//            .stream()
-//            .map(this::translateAd)
-//            .toList();
-//
-//        //console
-//        System.out.println("translated ads");
-//        for (var a : translatedScrapedAds) {
-//            System.out.println(a);
-//        }
-//
-//        for (var translatedScrapedAd : translatedScrapedAds) {
-//            if (translatedScrapedAd.getDescription() != null) {
-//                String summarizedDescription = gptService.summarizeDescription(translatedScrapedAd.getDescription());
-//                translatedScrapedAd.setDescription(summarizedDescription);
-//            }
-//        }
-//
-//        //comsole
-//        System.out.println("summarized ads");
-//        for (var scrapedAd : translatedScrapedAds) {
-//            System.out.println(scrapedAd);
-//        }
-//
-//        List<String> apartmentDescriptionsForEmbedding = translatedScrapedAds
-//            .stream()
-//            .map(ScrapedAd::toEmbeddableText)
-//            .toList();
-//
-//        //console
-//        System.out.println("embeddable text");
-//        for (var apartmentDescription : apartmentDescriptionsForEmbedding) {
-//            System.out.println(apartmentDescription);
-//        }
-//
-//
-//        List<List<Float>> embeddings = apartmentDescriptionsForEmbedding
-//            .stream()
-//            .map(embeddingService::embedWithAda)
-//            .toList();
-//
-//        adService.createAds(scrapedAdsToSave, embeddings, translatedScrapedAds, forSale);
-//        adService.saveAdsChanges();
-//        System.out.println("saved");
+
+        List<Ad> activeNotEdited = getActiveNotEdited(activeAds, activeButEdited);
+        List<ScrapedAd> scrapedAdsToSave = getBrandNewAdScrapes(scrapedApartments, activeNotEdited).stream().limit(40).toList();
+
+
+        //console
+        System.out.println("scraped to save");
+        for (var x : scrapedAdsToSave) {
+            System.out.println(x);
+        }
+
+        List<ScrapedAd> translatedScrapedAds = scrapedAdsToSave
+            .stream()
+            .map(this::translateAd)
+            .toList();
+
+        for (var translatedScrapedAd : translatedScrapedAds) {
+            if (translatedScrapedAd.getDescription() != null) {
+                String summarizedDescription = gptService.summarizeDescription(translatedScrapedAd.getDescription());
+                translatedScrapedAd.setDescription(summarizedDescription);
+            }
+        }
+
+        List<String> apartmentDescriptionsForEmbedding = translatedScrapedAds
+            .stream()
+            .map(ScrapedAd::toEmbeddableText)
+            .toList();
+
+        List<List<Float>> embeddings = apartmentDescriptionsForEmbedding
+            .stream()
+            .map(embeddingService::embedWithAda)
+            .toList();
+
+        adService.createAds(scrapedAdsToSave, embeddings, translatedScrapedAds, forSale);
+        adService.saveAdsChanges();
+        System.out.println("saved");
+
     }
 
 

@@ -1,0 +1,410 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OpenAPI definition",
+    "version": "v0"
+  },
+  "servers": [{
+    "url": "http://localhost:8080",
+    "description": "Generated server url"
+  }],
+  "paths": {
+    "/api/properties-chat/{userId}/{sessionId}": {
+      "get": {
+        "tags": ["chat-controller"],
+        "operationId": "getMessageHistory",
+        "parameters": [{
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }, {
+          "name": "sessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatHistoryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["chat-controller"],
+        "operationId": "receiveMessage",
+        "parameters": [{
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }, {
+          "name": "sessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatMessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/properties-chat/{userId}": {
+      "get": {
+        "tags": ["chat-controller"],
+        "operationId": "getUserChatSessions",
+        "parameters": [{
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ad-recommendation/{userId}/{sessionId}": {
+      "get": {
+        "tags": ["recommendation-controller"],
+        "operationId": "getSessionRecommendations",
+        "parameters": [{
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }, {
+          "name": "sessionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MessageInput": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ChatMessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "fromUser": {
+            "type": "boolean"
+          },
+          "chatSessionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "adsFound": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RegisterInput": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "valid": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AuthenticationResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "LoginInput": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "valid": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ChatSessionResponse": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "SessionsResponse": {
+        "type": "object",
+        "properties": {
+          "chatSessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatSessionResponse"
+            }
+          }
+        }
+      },
+      "ChatHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "messageHistory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageResponse"
+            }
+          }
+        }
+      },
+      "AdResponse": {
+        "type": "object",
+        "properties": {
+          "adId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "town": {
+            "type": "string"
+          },
+          "neighbourhood": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "accommodationType": {
+            "type": "string",
+            "enum": ["ROOM", "ONE_ROOM", "TWO_ROOM", "THREE_ROOM", "FOUR_ROOM", "STUDIO", "MANY_ROOMS", "MAISONETTE"]
+          },
+          "price": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currency": {
+            "type": "string",
+            "enum": ["BGN", "USD", "EURO"]
+          },
+          "propertyProvider": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "floor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalFloors": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gasProvided": {
+            "type": "boolean"
+          },
+          "thermalPowerPlantProvided": {
+            "type": "boolean"
+          },
+          "forSale": {
+            "type": "boolean"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "yearBuilt": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "link": {
+            "type": "string"
+          },
+          "construction": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "imageUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RecommendationResponse": {
+        "type": "object",
+        "properties": {
+          "recommendedAds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdResponse"
+            }
+          },
+          "chatSessionId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    }
+  }
+}

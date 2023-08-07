@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.trading212.project1.core.models.ChatMessage;
 import com.trading212.project1.core.models.openai.GPT3Role;
 import com.trading212.project1.core.models.openai.GPTFunctionCallDTO;
 import lombok.AllArgsConstructor;
@@ -32,7 +33,7 @@ public class GPTService {
     private static final String API_ENDPOINT = "https://api.openai.com/v1/chat/completions";
     private static final String GPT_MODEL_LATEST = "gpt-3.5-turbo";
     private static final String GPT_MODEL_0301 = "gpt-3.5-turbo-0301";
-    private static final String API_KEY = "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";
+    private static final String API_KEY = "your-api-key";
 
     private static final JsonParser JSON_PARSER = new JsonParser();
 
@@ -112,8 +113,19 @@ public class GPTService {
         Map<String, Object> arguments = new Gson().fromJson(argumentsString, type);
 
         return new GPTFunctionCallDTO(name, arguments);
+    }
 
-
+    public List<GPTMessageDTO> toGPTMessageHistory(List<ChatMessage> sortedChatMessageHistory) {
+        List<GPTMessageDTO> gptMessageHistory = new ArrayList<>();
+        for (var chatMessage : sortedChatMessageHistory) {
+            gptMessageHistory.add(
+                    new GPTService.GPTMessageDTO(
+                            (chatMessage.isFromUser() ? GPT3Role.user : GPT3Role.assistant),
+                            chatMessage.getTranslatedMessage()
+                    )
+            );
+        }
+        return gptMessageHistory;
     }
 
     private  HttpResponse<String> sendPostRequest(String apiUrl, String apiKey, String jsonPayload)
@@ -139,8 +151,6 @@ public class GPTService {
     }
 
     private String generateTranslationRequestBody(GPTMessageDTO message, String modelName) {
-        System.out.println("this is the message content");
-        System.out.println(message.content);
         JsonObject requestBody = new JsonObject();
         requestBody.addProperty("model", modelName);
         JsonArray messages = new JsonArray();
@@ -160,24 +170,6 @@ public class GPTService {
         return requestBody.toString();
     }
 
-//    private String generateTranslationRequestBody(GPTMessageDTO message, String modelName) {
-//        System.out.println("this is the message content");
-//        System.out.println(message.content);
-//        JsonObject requestBody = new JsonObject();
-//        requestBody.addProperty("model", modelName);
-//        JsonArray messages = new JsonArray();
-//
-//        JsonObject systemMessage = new JsonObject();
-//        systemMessage.addProperty("role", "system");
-//        systemMessage.addProperty("content", AGENT.DESCRIPTION_AGENT_SUMMARIZER);
-//        messages.add(systemMessage);
-//
-//        messages.add(new JsonParser().parse(message.toString()).getAsJsonObject());
-//
-//        requestBody.add("messages", messages);
-//
-//        return requestBody.toString();
-//    }
 
     private String generateChatRequestBody(List<GPTMessageDTO> messages, String modelName) {
         List<Map<String, String>> messagesInBody = new ArrayList<>();

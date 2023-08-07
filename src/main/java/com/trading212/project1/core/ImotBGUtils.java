@@ -120,8 +120,8 @@ public final class ImotBGUtils {
         }
 
 
-        SOFIA_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.SOFIA, AccommodationType.TWO_ROOM));
+        SOFIA_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.TWO_ROOM));
 
-        SOFIA_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.SOFIA, AccommodationType.TWO_ROOM));
+        SOFIA_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.TWO_ROOM));
     }
 }

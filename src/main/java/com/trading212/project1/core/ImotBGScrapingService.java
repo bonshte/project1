@@ -131,6 +131,7 @@ public class ImotBGScrapingService {
         }
         List<ScrapedAd> scrapedAds = new LinkedList<>();
         String baseFilterSearchUrl = firstPageUrl.substring(0, firstPageUrl.length() - 1);
+
         for (int i = 1; i <= pages; ++i) {
             String currentUrl = baseFilterSearchUrl + i;
             scrapedAds.addAll(scrapeResultPage(currentUrl, scrapeConfig));

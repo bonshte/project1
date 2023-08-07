@@ -113,6 +113,8 @@ public class AdService {
     //check this later
     public List<Ad> findClosestAds(List<Float> embedding, String partitionName,
                                    int topK, SimilaritySearchFilter searchFilter) {
+        System.out.println("search filter");
+        System.out.println(searchFilter.toFilterExpression());
 
         List<Long> recommendedAdIds = embeddingRepository.similaritySearchForAds(embedding,
             searchFilter.toFilterExpression(), partitionName, topK);
@@ -121,7 +123,6 @@ public class AdService {
         for (var recommendedAdId : recommendedAdIds) {
             recommendedAds.add(Mappers.fromAdEntity(adRepository.getByAdId(recommendedAdId)));
         }
-        System.out.println("found stuff");
         return recommendedAds;
     }
 

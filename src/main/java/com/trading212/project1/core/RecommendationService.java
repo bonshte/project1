@@ -45,9 +45,6 @@ public class RecommendationService {
                 .map(Mappers::fromChatSessionRecommendationEntity)
                 .collect(Collectors.toList());
 
-        for (var recommendation : recommendations) {
-            System.out.println(recommendation.getAdId());
-        }
 
         List<Long> sortedAdIds = recommendations.stream()
                 .sorted(Comparator.comparing(ChatSessionRecommendation::getRecommendedAt).reversed())
