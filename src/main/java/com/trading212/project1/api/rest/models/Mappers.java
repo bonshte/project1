@@ -16,6 +16,8 @@ public class Mappers {
         chatMessageResponse.setMessage(chatMessage.getSentMessage());
         chatMessageResponse.setFromUser(chatMessage.isFromUser());
         chatMessageResponse.setChatSessionId(chatMessage.getChatSessionId());
+        chatMessageResponse.setAdsFound(chatMessage.isAdsFound());
+
         return chatMessageResponse;
     }
 

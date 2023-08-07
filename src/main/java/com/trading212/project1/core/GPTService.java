@@ -67,21 +67,17 @@ public class GPTService {
     }
 
     public String summarizeRecommendations(List<GPTMessageDTO> oldMessages, String recommendations) {
-
-        if (oldMessages == null) {
-            System.out.println("list null");
-        }
-        if (recommendations == null) {
-            System.out.println("null rec");
-        }
         GPTMessageDTO systemMessage = new GPTMessageDTO(GPT3Role.system, recommendations);
         oldMessages.add(systemMessage);
         try {
             String jsonBody = generateChatRequestBody(oldMessages, GPT_MODEL_LATEST);
             HttpResponse<String> response = sendPostRequest(API_ENDPOINT, API_KEY, jsonBody);
             validateResponse(response);
-            System.out.println("here");
             System.out.println(response.body());
+            if (checkForFunctionCall(response.body())) {
+                //sometimes the chat returns another function call after the system message and that is really annoying, requires a lot of code refactoring this is fast fix
+                return "I am sending any matching properties";
+            }
             return extractContent(response.body()).content;
         } catch (Exception e) {
             throw new RuntimeException(e);

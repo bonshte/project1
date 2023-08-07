@@ -72,7 +72,7 @@ CREATE TABLE chatSessionRecommendation (
     user_id INT,
     recommended_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     for_sale BOOLEAN NOT NULL,
-    PRIMARY KEY(chat_session_id, ad_id),
+    PRIMARY KEY(chat_session_id, ad_id, recommended_at),
     FOREIGN KEY(user_id) REFERENCES user(user_id),
     FOREIGN KEY(chat_session_id) REFERENCES chatSession(chat_session_id),
     FOREIGN KEY(ad_id) REFERENCES ads(ad_id) ON DELETE CASCADE

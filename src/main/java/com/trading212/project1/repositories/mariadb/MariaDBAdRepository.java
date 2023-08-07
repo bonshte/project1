@@ -106,7 +106,8 @@ public class MariaDBAdRepository implements AdRepository {
     }
 
     public AdEntity getByAdId(Long adId) {
-        return jdbcTemplate.queryForObject(Queries.GET_AD_BY_ID, new Object[]{adId}, new AdEntityRowMapper());
+        System.out.println(adId);
+        return jdbcTemplate.queryForObject(Queries.GET_AD_BY_ID,  new AdEntityRowMapper(), adId);
     }
 
 

@@ -15,8 +15,8 @@ public final class ImotBGUtils {
     public static final List<ScrapeSearchFilter> ALL_RENT_SEARCH_FILTERS = new ArrayList<>();
     public static final List<ScrapeSearchFilter> ALL_PURCHASE_SEARCH_FILTERS = new ArrayList<>();
 
-    public static final List<ScrapeSearchFilter> BURGAS_PURCHASE_SEARCH_FILTERS = new ArrayList<>();
-    public static final List<ScrapeSearchFilter> BURGAS_RENT_SEARCH_FILTERS = new ArrayList<>();
+    public static final List<ScrapeSearchFilter> SOFIA_PURCHASE_SEARCH_FILTERS = new ArrayList<>();
+    public static final List<ScrapeSearchFilter> SOFIA_RENT_SEARCH_FILTERS = new ArrayList<>();
 
     private ImotBGUtils() {
         throw new AssertionError("Cannot instantiate " + this.getClass().getName());
@@ -120,12 +120,8 @@ public final class ImotBGUtils {
         }
 
 
-        BURGAS_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.TWO_ROOM));
+        SOFIA_RENT_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.SOFIA, AccommodationType.TWO_ROOM));
 
-
-        BURGAS_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.BURGAS, AccommodationType.TWO_ROOM));
-
-
-
+        SOFIA_PURCHASE_SEARCH_FILTERS.add(new ScrapeSearchFilter(Location.SOFIA, AccommodationType.TWO_ROOM));
     }
 }

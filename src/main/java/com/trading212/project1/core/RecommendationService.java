@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,28 +35,39 @@ public class RecommendationService {
     }
 
     public List<Ad> getSessionRecommendedAds(int userId, int sessionId) {
-        if (authorizationService.isAuthorizedUserSessionRequest(userId, sessionId)) {
+        if (!authorizationService.isAuthorizedUserSessionRequest(userId, sessionId)) {
             throw new UnauthorizedException("unauthorized access to " + userId + " session " + sessionId);
         }
 
-        List<ChatSessionRecommendation> recommendations =
-            recommendationRepository.getRecommendationsForSession(sessionId)
+
+        List<ChatSessionRecommendation> recommendations = recommendationRepository.getRecommendationsForSession(sessionId)
                 .stream()
                 .map(Mappers::fromChatSessionRecommendationEntity)
-                .toList();
+                .collect(Collectors.toList());
 
-        Map<Long, LocalDateTime> adIdToRecommendedAt = recommendations.stream()
-            .collect(Collectors.toMap(ChatSessionRecommendation::getAdId, ChatSessionRecommendation::getRecommendedAt));
+        for (var recommendation : recommendations) {
+            System.out.println(recommendation.getAdId());
+        }
 
-        List<Ad> ads = adService.getAds(new ArrayList<>(adIdToRecommendedAt.keySet()));
+        List<Long> sortedAdIds = recommendations.stream()
+                .sorted(Comparator.comparing(ChatSessionRecommendation::getRecommendedAt).reversed())
+                .map(ChatSessionRecommendation::getAdId)
+                .collect(Collectors.toList());
+
+
+        List<Ad> ads = adService.getAds(sortedAdIds);
+
 
         List<Ad> sortedAds = new ArrayList<>(ads);
-
-        sortedAds.sort((ad1, ad2) ->
-            adIdToRecommendedAt.get(ad2.getAdId()).compareTo(adIdToRecommendedAt.get(ad1.getAdId())));
+        sortedAds.sort((ad1, ad2) -> {
+            int index1 = sortedAdIds.indexOf(ad1.getAdId());
+            int index2 = sortedAdIds.indexOf(ad2.getAdId());
+            return Integer.compare(index1, index2);
+        });
 
         return sortedAds;
     }
+
 
     @Transactional
     public void createRecommendations(List<Ad> recommendedAds, int userId, int sessionId) {

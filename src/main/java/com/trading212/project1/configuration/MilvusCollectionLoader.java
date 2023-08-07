@@ -10,14 +10,11 @@ public class MilvusCollectionLoader implements CommandLineRunner {
     private final MilvusAdsRepository milvusAdsRepository;
 
     public MilvusCollectionLoader(MilvusAdsRepository milvusAdsRepository) {
-
         this.milvusAdsRepository = milvusAdsRepository;
-        this.milvusAdsRepository.query();
     }
 
     @Override
     public void run(String... args) {
-        milvusAdsRepository.query();
         milvusAdsRepository.setUp();
     }
 }

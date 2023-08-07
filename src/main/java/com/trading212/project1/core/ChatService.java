@@ -246,7 +246,11 @@ public class ChatService {
 
         Integer price = null;
         if (args.get("price") != null) {
+
             price = ((Number) args.get("price")).intValue();
+            if (price == 0) {
+                price = null;
+            }
         }
 
         List<String> neighbourhoods = new ArrayList<>();

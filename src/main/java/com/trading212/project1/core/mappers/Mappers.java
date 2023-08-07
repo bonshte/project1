@@ -70,8 +70,8 @@ public class Mappers {
         chatSessionRecommendation.setChatSessionId(chatSessionRecommendationEntity.getChatSessionId());
         chatSessionRecommendation.setRecommendedAt(chatSessionRecommendationEntity.getRecommendedAt());
         chatSessionRecommendation.setUserId(chatSessionRecommendationEntity.getUserId());
-        chatSessionRecommendation.setForSale(chatSessionRecommendation.isForSale());
-        chatSessionRecommendation.setAdId(chatSessionRecommendation.getAdId());
+        chatSessionRecommendation.setForSale(chatSessionRecommendationEntity.isForSale());
+        chatSessionRecommendation.setAdId(chatSessionRecommendationEntity.getAdId());
 
         return chatSessionRecommendation;
     }
